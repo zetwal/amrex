@@ -165,11 +165,31 @@ namespace amrex
           {
             m_current[1] = m_boxLo[1];
             m_current[2]++;
-          }
+#if AMREX_SPACEDIM >= 4
+            if (m_current[2] > m_boxHi[2])
+            {
+                m_current[2] = m_boxLo[2];
+                m_current[3]++;
+#if AMREX_SPACEDIM >= 5
+                if (m_current[3] > m_boxHi[3])
+                {
+                    m_current[3] = m_boxLo[3];
+                    m_current[4]++;
+#if AMREX_SPACEDIM == 6
+                    if (m_current[4] > m_boxHi[4])
+                    {
+                        m_current[4] = m_boxLo[4];
+                        m_current[5]++;
+                    }
+#endif
+                }
+#endif
+            }
 #endif
       }      
 #endif
   }
+#endif
 
   inline
   const IntVect& BoxIterator::operator () () const
