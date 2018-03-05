@@ -36,8 +36,8 @@ public:
              const Real* dx,
              const Real* base);
     //! Explicit dimension specific constructors.
-    RealBox (AMREX_D_DECL(Real x0, Real y0, Real z0),
-             AMREX_D_DECL(Real x1, Real y1, Real z1));
+    RealBox (AMREX_D_DECL6(Real x0, Real y0, Real z0, Real u0, Real v0, Real w0),
+             AMREX_D_DECL6(Real x1, Real y1, Real z1, Real u1, Real v1, Real w1));
     //! Returns lo side.
     const Real* lo () const& { return xlo; }
     const Real* lo () && = delete;
@@ -51,15 +51,19 @@ public:
     //! Returns length in specified direction.
     Real length (int dir) const { return xhi[dir]-xlo[dir]; }
     //! Sets lo side.
-    void setLo (const Real* a_lo) { AMREX_D_EXPR(xlo[0] = a_lo[0], xlo[1] = a_lo[1], xlo[2] = a_lo[2]); }
+    void setLo (const Real* a_lo) { AMREX_D_EXPR6(xlo[0] = a_lo[0], xlo[1] = a_lo[1], xlo[2] = a_lo[2],
+                                                  xlo[3] = a_lo[3], xlo[4] = a_lo[4], xlo[5] = a_lo[5]); }
     //! Sets lo side.
-    void setLo (const Vector<Real>& a_lo) { AMREX_D_EXPR(xlo[0] = a_lo[0], xlo[1] = a_lo[1], xlo[2] = a_lo[2]); }
+    void setLo (const Vector<Real>& a_lo) { AMREX_D_EXPR6(xlo[0] = a_lo[0], xlo[1] = a_lo[1], xlo[2] = a_lo[2],
+                                                          xlo[3] = a_lo[3], xlo[4] = a_lo[4], xlo[5] = a_lo[5]); }
     //! Sets lo side in specified direction.
     void setLo (int dir, Real a_lo) { BL_ASSERT(dir >= 0 && dir < AMREX_SPACEDIM); xlo[dir] = a_lo; }
     //! Sets hi side.
-    void setHi (const Real* a_hi) { AMREX_D_EXPR(xhi[0] = a_hi[0], xhi[1] = a_hi[1], xhi[2] = a_hi[2]); }
+    void setHi (const Real* a_hi) { AMREX_D_EXPR6(xhi[0] = a_hi[0], xhi[1] = a_hi[1], xhi[2] = a_hi[2],
+                                                  xhi[3] = a_hi[3], xhi[4] = a_hi[4], xhi[5] = a_hi[5]); }
     //! Sets hi side.
-    void setHi (const Vector<Real>& a_hi) { AMREX_D_EXPR(xhi[0] = a_hi[0], xhi[1] = a_hi[1], xhi[2] = a_hi[2]); }
+    void setHi (const Vector<Real>& a_hi) { AMREX_D_EXPR6(xhi[0] = a_hi[0], xhi[1] = a_hi[1], xhi[2] = a_hi[2],
+                                                          xhi[3] = a_hi[3], xhi[4] = a_hi[4], xhi[5] = a_hi[5]); }
     //! Sets hi side in specified direction.
     void setHi (int dir, Real a_hi) { BL_ASSERT(dir >= 0 && dir < AMREX_SPACEDIM); xhi[dir] = a_hi; }
     //! Is the RealBox OK; i.e. does it have non-negative volume?

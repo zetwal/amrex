@@ -15,13 +15,13 @@ namespace amrex {
 class Periodicity
 {
 public:
-    Periodicity () : period(AMREX_D_DECL(0,0,0)) {}
+    Periodicity () : period(AMREX_D_DECL6(0,0,0,0,0,0)) {}
     explicit Periodicity (const IntVect& v) : period(v) {}
 
     bool isAnyPeriodic () const
-	{ return AMREX_D_TERM(period[0]>0, || period[1]>0, || period[2]>0); }
+	{ return AMREX_D_TERM6(period[0]>0, || period[1]>0, || period[2]>0, || period[3]>0, || period[4]>0, || period[5]>0); }
     bool isAllPeriodic () const
-	{ return AMREX_D_TERM(period[0]>0, && period[1]>0, && period[2]>0); }
+	{ return AMREX_D_TERM6(period[0]>0, && period[1]>0, && period[2]>0, && period[3]>0, && period[4]>0, && period[5]>0); }
     bool isPeriodic (int dir) const
 	{ return period[dir]>0; }
 

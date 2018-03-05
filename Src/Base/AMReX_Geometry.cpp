@@ -20,7 +20,7 @@ namespace amrex {
 //
 int     Geometry::spherical_origin_fix = 0;
 RealBox Geometry::prob_domain;
-bool    Geometry::is_periodic[AMREX_SPACEDIM] = {AMREX_D_DECL(0,0,0)};
+bool    Geometry::is_periodic[AMREX_SPACEDIM] = {AMREX_D_DECL6(0,0,0,0,0,0)};
 
 std::ostream&
 operator<< (std::ostream&   os,
@@ -250,6 +250,102 @@ Geometry::periodicShift (const Box&      target,
 
     Box locsrc(src);
 
+#if (AMREX_SPACEDIM > 3)
+    int nist,njst,nkst,nmst,nnst,npst;
+    int niend,njend,nkend,nmend,nnend,npend;
+    nist = njst = nkst = nmst = nnst = npst = 0;
+    niend = njend = nkend = nmend = nnend = npend = 0;
+    AMREX_D_TERM6( nist , =njst , =nkst , =nmst , =nnst , =npst ) = -1;
+    AMREX_D_TERM6( niend , =njend , =nkend , =nmend , =nnend , =npend ) = +1;
+
+    int ri,rj,rk,rm,rn,rp;
+    for (ri = nist; ri <= niend; ri++)
+    {
+      if (ri != 0 && !is_periodic[0]) continue;
+      if (ri != 0 &&  is_periodic[0]) locsrc.shift(0,ri*domain.length(0));
+
+      for (rj = njst; rj <= njend; rj++)
+      {
+        if (rj != 0 && !is_periodic[1]) continue;
+        if (rj != 0 &&  is_periodic[1]) locsrc.shift(1,rj*domain.length(1));
+
+        for (rk = nkst; rk <= nkend; rk++)
+        {
+            if (rk != 0 && !is_periodic[2]) continue;
+            if (rk != 0 &&  is_periodic[2]) locsrc.shift(2,rk*domain.length(2));
+
+            for (rm = nmst; rm <= nmend; rm++)
+            {
+              if (rm != 0 && !is_periodic[3]) continue;
+              if (rm != 0 &&  is_periodic[3]) locsrc.shift(3,rm*domain.length(3));
+
+              for (rn = nnst; rn <= nnend; rn++)
+              {
+#if (AMREX_SPACEDIM >= 5)
+                if (rn != 0 && !is_periodic[4]) continue;
+                if (rn != 0 && is_periodic[4]) locsrc.shift(4,rm*domain.length(4));
+#else
+                if (rn != 0) continue;
+                if (rn != 0) locsrc.shift(4,rm*domain.length(4));
+#endif
+
+                for (rp = npst; rp <= npend; rp++)
+                {
+#if (AMREX_SPACEDIM == 6)
+                  if (rp != 0 && !is_periodic[5]) continue;
+                  if (rp != 0 && is_periodic[5]) locsrc.shift(5,rm*domain.length(5));
+#else
+                  if (rp != 0) continue;
+                  if (rp != 0) locsrc.shift(5,rm*domain.length(5));
+#endif
+
+                if (ri == 0 && rj == 0 && rk == 0 &&
+                    rm == 0 && rn == 0 && rp == 0)
+                    continue;
+                //
+                // If losrc intersects target, then add to "out".
+                //
+                if (target.intersects(locsrc))
+                {
+                    out.push_back(IntVect(AMREX_D_DECL6(ri*domain.length(0),
+                                                        rj*domain.length(1),
+                                                        rk*domain.length(2),
+                                                        rm*domain.length(3),
+                                                        rn*domain.length(4),
+                                                        rp*domain.length(5))));
+                }
+
+#if (AMREX_SPACEDIM == 6)
+                if (rp != 0 && is_periodic[5]) locsrc.shift(5,-rm*domain.length(5));
+#else
+                if (rp != 0) locsrc.shift(5,-rm*domain.length(5));
+#endif
+                } // p
+
+#if (AMREX_SPACEDIM >= 5)
+              if (rn != 0 && is_periodic[4]) locsrc.shift(4,-rm*domain.length(4));
+#else
+              if (rn != 0) locsrc.shift(4,-rm*domain.length(4));
+#endif
+              } // n
+
+              if (rm != 0 && is_periodic[3])
+                locsrc.shift(3,-rm*domain.length(3));
+            } // m
+
+            if (rk != 0 && is_periodic[2])
+              locsrc.shift(2,-rk*domain.length(2));
+        } // k
+
+          if (rj != 0 && is_periodic[1])
+              locsrc.shift(1,-rj*domain.length(1));
+      } // j
+
+        if (ri != 0 && is_periodic[0])
+            locsrc.shift(0,-ri*domain.length(0));
+    } // i
+
+#else
     int nist,njst,nkst;
     int niend,njend,nkend;
     nist = njst = nkst = 0;
@@ -317,6 +413,7 @@ Geometry::periodicShift (const Box&      target,
         if (ri != 0 && is_periodic[0])
             locsrc.shift(0,-ri*domain.length(0));
     }
+#endif
 }
 
 #ifdef BL_USE_MPI

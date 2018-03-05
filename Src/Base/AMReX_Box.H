@@ -176,7 +176,7 @@ namespace amrex
 * of the Box.  Boxes can exist in positive and negative indexing space.
 *
 * Box is a dimension dependent class, so SPACEDIM must be 
-* defined as either 1, 2, or 3 when compiling.
+* defined as either 1, 2, 3, 4, 5 or 6  when compiling.
 */
 class Box
 {
@@ -242,8 +242,11 @@ public:
     IntVect size () const
     {
         return IntVect(AMREX_D_DECL(bigend[0]-smallend[0] + 1,
-                              bigend[1]-smallend[1] + 1,
-                              bigend[2]-smallend[2] + 1));
+                                    bigend[1]-smallend[1] + 1,
+                                    bigend[2]-smallend[2] + 1,
+                                    bigend[3]-smallend[3] + 1,
+                                    bigend[4]-smallend[4] + 1,
+                                    bigend[5]-smallend[5] + 1));
     }
 
     //! Return the length of the Box in given direction.
@@ -256,6 +259,15 @@ public:
         return {bigend[0]-smallend[0]+1, bigend[1]-smallend[1]+1, 1};
 #elif (AMREX_SPACEDIM == 3)
         return {bigend[0]-smallend[0]+1, bigend[1]-smallend[1]+1, bigend[2]-smallend[2]+1};
+#elif (AMREX_SPACEDIM == 4)
+        return {bigend[0]-smallend[0]+1, bigend[1]-smallend[1]+1, bigend[2]-smallend[2]+1,
+                bigend[4]-smallend[4]+1};
+#elif (AMREX_SPACEDIM == 5)
+        return {bigend[0]-smallend[0]+1, bigend[1]-smallend[1]+1, bigend[2]-smallend[2]+1,
+                bigend[4]-smallend[4]+1, bigend[5]-smallend[5]+1};
+#elif (AMREX_SPACEDIM == 6)
+        return {bigend[0]-smallend[0]+1, bigend[1]-smallend[1]+1, bigend[2]-smallend[2]+1,
+                bigend[4]-smallend[4]+1, bigend[5]-smallend[5]+1, bigend[6]-smallend[6]+1};
 #endif
     }
 
@@ -669,7 +681,22 @@ Box::index (const IntVect& v) const
     result += length(0)*(v[1]-smallend[1]);
 #elif AMREX_SPACEDIM==3
     result += length(0)*(v[1]-smallend[1]
-                         +(v[2]-smallend[2])*length(1));
+                       +(v[2]-smallend[2])*length(1));
+#elif AMREX_SPACEDIM==4
+    result += length(0)* ((v[1]-smallend[1])
+                       +  (v[2]-smallend[2])*length(1)
+                       +  (v[3]-smallend[3])*length(1)*length(2) );
+#elif AMREX_SPACEDIM==5
+    result += length(0)* ((v[1]-smallend[1])
+                       +  (v[2]-smallend[2])*length(1)
+                       +  (v[3]-smallend[3])*length(1)*length(2)
+                       +  (v[4]-smallend[4])*length(1)*length(2)*length(3) );
+#elif AMREX_SPACEDIM==6
+    result += length(0)* ((v[1]-smallend[1])
+                       +  (v[2]-smallend[2])*length(1)
+                       +  (v[3]-smallend[3])*length(1)*length(2)
+                       +  (v[4]-smallend[4])*length(1)*length(2)*length(3)
+                       +  (v[5]-smallend[4])*length(1)*length(2)*length(3)*length(4) );
 #endif
     return result;
 }

@@ -15,7 +15,7 @@
 
 /*
   The AMREX_SPACEDIM macro specifies the dimension of the AMReX library
-  to be built.  Acceptable values are either 1, 2, or 3.  This macro
+  to be built.  Acceptable values are from 1 to 6 inclusive.  This macro
   must be set for every compilation as many of the data structures of
   AMReX rely on it being set.
 
@@ -27,14 +27,16 @@
 #error AMREX_SPACEDIM must be defined
 #endif
 
-#if  (AMREX_SPACEDIM != 1 && AMREX_SPACEDIM !=2 && AMREX_SPACEDIM != 3)
-#error AMREX_SPACEDIM must be either 1, 2, or 3
+#if  (AMREX_SPACEDIM != 1 && AMREX_SPACEDIM !=2 && AMREX_SPACEDIM != 3 && 
+      AMREX_SPACEDIM != 4 && AMREX_SPACEDIM !=5 && AMREX_SPACEDIM != 6)
+#error AMREX_SPACEDIM must be either 1, 2, 3, 4, 5 or 6
 #endif
 
 /*
   The SpaceDim C++ integer constant specifies the dimension of the
   AMReX library to be built.  It is initialized to the value of
-  the macro AMREX_SPACEDIM.  Hence it will have one of the values 1, 2, or 3.
+  the macro AMREX_SPACEDIM.  Hence it will have one of the values 
+  from 1 through 6 inclusive.
 
   C++ code that depends on the dimensionality of the problem that
   you're trying to solve should be cast in terms of this constant,
@@ -48,14 +50,12 @@ namespace amrex
 }
 #endif
 
-
 #if AMREX_SPACEDIM==1
-
 /*
-  The AMREX_D_EXPR(a,b,c) macro expands to a comma expression that will
-  evaluate SpaceDim of its arguments, counting from the left; i.e.
+  The AMREX_D_EXPR(a,b,c,d,e,f) macro expands to a comma expression that 
+  will evaluate SpaceDim of its arguments, counting from the left; i.e.
   AMREX_SPACEDIM==1 implies only a is evaluated, AMREX_SPACEDIM==2
-  implies both a and b, and AMREX_SPACEDIM==3 implies all three
+  implies both a and b, and AMREX_SPACEDIM==6 implies all six
   arguments are evaluated.  This macro can be used to enhance
   the portability of code that works with structures whose size
   depends on AMREX_SPACEDIM.
@@ -74,13 +74,21 @@ namespace amrex
 
   corresponding to AMREX_SPACEDIM values of 1, 2, or 3.
 */
-#  define AMREX_D_EXPR(a,b,c) ((void)((a),0))
+
+#  define AMREX_D_EXPR (a,b,c      ) ((void)((a),0))
+#  define AMREX_D_EXPR6(a,b,c,d,e,f) ((void)((a),0))
 
 /*
   The AMREX_D_DECL(a,b,c) macro expands to a comma-separated list of
   1, 2, or all 3 of the arguments of the call, depending on the
   value of AMREX_SPACEDIM.  This can be used to write portable
-  function calls that depend on 1, 2, or 3 arguments, corresponding
+  function calls that depend on 1 through 3 arguments, corresponding
+  to the value of AMREX_SPACEDIM.
+
+  The AMREX_D_DECL6(a,b,c,d,e,f) macro expands to a comma-separated list of
+  1, 2, 3, 4, 5 or all 6 of the arguments of the call, depending on the
+  value of AMREX_SPACEDIM.  This can be used to write portable
+  function calls that depend on 1 through 6 arguments, corresponding
   to the value of AMREX_SPACEDIM.
 
   For example:
@@ -97,7 +105,9 @@ namespace amrex
 
   corresponding to AMREX_SPACEDIM values of 1, 2, or 3.
 */
-#  define AMREX_D_DECL(a,b,c) a
+
+#  define AMREX_D_DECL (a,b,c      ) a
+#  define AMREX_D_DECL6(a,b,c,d,e,f) a
 
 /*
   The AMREX_D_TERM(a,b,c) macro expands to a whitespace-separated list of
@@ -120,17 +130,19 @@ namespace amrex
 
   corresponding to AMREX_SPACEDIM values of 1, 2, or 3.
 */
-#  define AMREX_D_TERM(a,b,c) a
+
+#  define AMREX_D_TERM (a,b,c      ) a
+#  define AMREX_D_TERM6(a,b,c,d,e,f) a
 
 /*
-  The AMREX_D_PICK(a,b,c) macro expands to a single result equal to the
-  1st, 2nd, or 3rd of the arguments of the call, depending on the value
+  The AMREX_D_PICK(a,b,c,d,e,f) macro expands to a single result equal to the
+  1st, 2nd, ... or 6th of the arguments of the call, depending on the value
   of AMREX_SPACEDIM.  This can be used to write program logic
   that depend on the value of AMREX_SPACEDIM.
 
   For example:
 
-     maxsize = AMREX_D_PICK(1024, 128, 32);
+     maxsize = AMREX_D_PICK(1024, 128, 32, 0, 0, 0);
 
   More explicitly, this macro evaluates to one of
 
@@ -142,17 +154,41 @@ namespace amrex
 
   corresponding to AMREX_SPACEDIM values of 1, 2, or 3.
 */
-#  define AMREX_D_PICK(a,b,c) a
+#  define AMREX_D_PICK (a,b,c      ) a
+#  define AMREX_D_PICK6(a,b,c,d,e,f) a
 #elif AMREX_SPACEDIM==2
-#  define AMREX_D_EXPR(a,b,c) ((void)((a),(b),0))
-#  define AMREX_D_DECL(a,b,c) a,b
-#  define AMREX_D_TERM(a,b,c) a b
-#  define AMREX_D_PICK(a,b,c) b
+#  define AMREX_D_EXPR (a,b,c      ) ((void)((a),(b),0))
+#  define AMREX_D_DECL (a,b,c      ) a,b
+#  define AMREX_D_TERM (a,b,c      ) a b
+#  define AMREX_D_PICK (a,b,c      ) b
+#  define AMREX_D_EXPR6(a,b,c,d,e,f) ((void)((a),(b),0))
+#  define AMREX_D_DECL6(a,b,c,d,e,f) a,b
+#  define AMREX_D_TERM6(a,b,c,d,e,f) a b
+#  define AMREX_D_PICK6(a,b,c,d,e,f) b
 #elif AMREX_SPACEDIM==3
-#  define AMREX_D_EXPR(a,b,c) ((void)((a),(b),(c),0))
-#  define AMREX_D_DECL(a,b,c) a,b,c
-#  define AMREX_D_TERM(a,b,c) a b c
-#  define AMREX_D_PICK(a,b,c) c
+#  define AMREX_D_EXPR (a,b,c      ) ((void)((a),(b),(c),0))
+#  define AMREX_D_DECL (a,b,c      ) a,b,c
+#  define AMREX_D_TERM (a,b,c      ) a b c
+#  define AMREX_D_PICK (a,b,c      ) c
+#  define AMREX_D_EXPR6(a,b,c,d,e,f) ((void)((a),(b),(c),0))
+#  define AMREX_D_DECL6(a,b,c,d,e,f) a,b,c
+#  define AMREX_D_TERM6(a,b,c,d,e,f) a b c
+#  define AMREX_D_PICK6(a,b,c,d,e,f) c
+#elif AMREX_SPACEDIM==4
+#  define AMREX_D_EXPR6(a,b,c,d,e,f) ((void)((a),(b),(c),(d),0))
+#  define AMREX_D_DECL6(a,b,c,d,e,f) a,b,c,d
+#  define AMREX_D_TERM6(a,b,c,d,e,f) a b c d
+#  define AMREX_D_PICK6(a,b,c,d,e,f) d
+#elif AMREX_SPACEDIM==5
+#  define AMREX_D_EXPR6(a,b,c,d,e,f) ((void)((a),(b),(c),(d),(e),0))
+#  define AMREX_D_DECL6(a,b,c,d,e,f) a,b,c,d,e
+#  define AMREX_D_TERM6(a,b,c,d,e,f) a b c d e
+#  define AMREX_D_PICK6(a,b,c,d,e,f) e
+#elif AMREX_SPACEDIM==6
+#  define AMREX_D_EXPR6(a,b,c,d,e,f) ((void)((a),(b),(c),(d),(e),(f),0))
+#  define AMREX_D_DECL6(a,b,c,d,e,f) a,b,c,d,e,f
+#  define AMREX_D_TERM6(a,b,c,d,e,f) a b c d e r
+#  define AMREX_D_PICK6(a,b,c,d,e,f) f
 #endif
 
 /* for backward compatibility */

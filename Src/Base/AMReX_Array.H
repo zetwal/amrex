@@ -52,13 +52,13 @@ namespace amrex
     template <class T>
     std::array<T*,AMREX_SPACEDIM> GetArrOfPtrs (std::array<T,AMREX_SPACEDIM>& a)
     {
-        return {AMREX_D_DECL(&a[0], &a[1], &a[2])};
+        return {AMREX_D_DECL6(&a[0], &a[1], &a[2], &a[3], &a[4], &a[5])};
     }
 
     template <class T>
     std::array<T const*,AMREX_SPACEDIM> GetArrOfConstPtrs (const std::array<T,AMREX_SPACEDIM>& a)
     {
-        return {AMREX_D_DECL(&a[0], &a[1], &a[2])};
+        return {AMREX_D_DECL6(&a[0], &a[1], &a[2], &a[3], &a[4], &a[5])};
     }
 }
 

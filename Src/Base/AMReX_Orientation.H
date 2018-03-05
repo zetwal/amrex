@@ -9,6 +9,9 @@
 
 namespace amrex {
 
+enum class Direction : int { AMREX_D_DECL6(x = 0, y = 1, z = 2,
+                                           u = 3, v = 4, w = 5) };
+
 class OrientationIter;
 
 /**

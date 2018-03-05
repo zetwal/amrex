@@ -33,16 +33,17 @@ public:
     //! Construct an IndexType identical to an IntVect.
     explicit IndexType (const IntVect& iv)
     {
-        itype = AMREX_D_TERM((iv[0]?1:0), | ((iv[1]?1:0)<<1), | ((iv[2]?1:0)<<2));
+        itype = AMREX_D_TERM6((iv[0]?1:0), | ((iv[1]?1:0)<<1), | ((iv[2]?1:0)<<2),
+                              (iv[3]?1:0), | ((iv[4]?1:0)<<1), | ((iv[5]?1:0)<<2));
     }
     /**
     * \brief Construct an IndexType given an explicit CellIndex for
-    * each direction.  AMREX_D_DECL is a macro that sets the constructor
+    * each direction.  AMREX_D_DECL6 is a macro that sets the constructor
     * to take AMREX_SPACEDIM arguments.
     */
-    IndexType (AMREX_D_DECL(CellIndex i, CellIndex j, CellIndex k))
+    IndexType (AMREX_D_DECL6(CellIndex i, CellIndex j, CellIndex k, CellIndex m, CellIndex n, CellIndex p))
     {
-        itype = AMREX_D_TERM(i, | (j<<1), | (k<<2));
+        itype = AMREX_D_TERM6(i, | (j<<1), | (k<<2), | (m<<3), | (n<<4), | (p<<5));
     }
     // dtor, copy-ctor, copy-op=, move-ctor, and move-op= are compiler generated.
 
@@ -82,7 +83,8 @@ public:
     //! Return an integer representing the IndexType in direction dir.
     int operator[] (int dir) const { return test(dir); }
     //! Fill an IntVect of size AMREX_SPACEDIM with IndexTypes.
-    IntVect ixType () const { return IntVect(AMREX_D_DECL(itype&1, (itype>>1)&1, (itype>>2)&1)); }
+    IntVect ixType () const { return IntVect(AMREX_D_DECL6(itype&1,      (itype>>1)&1, (itype>>2)&1,
+                                                           (itype>>3)&1, (itype>>4)&1, (itype>>5)&1)); }
     /**
     * \brief This static member function returns an IndexType object of value
     * IndexType::CELL.  It is provided as a convenience to our users

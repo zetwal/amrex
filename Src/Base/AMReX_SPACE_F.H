@@ -17,20 +17,27 @@
 
   More explicitly, the macro evaluates to one of
 
-
      lo(1):hi(1)
 
      lo(1):hi(1),lo(2):hi(2)
 
-     lo(1):hi(1),lo(2):hi(2),lo(3):hi(3)
+     ...
 
-  corresponding to AMREX_SPACEDIM values of 1, 2, or 3.
+     lo(1):hi(1),lo(2):hi(2),lo(3):hi(3),lo(4):hi(4),lo(5):hi(5),lo(6):hi(6)
+
+  corresponding to AMREX_SPACEDIM values of 1, 2, or ... 6.
 */
 #    define DIM_V(lo,hi) lo(1):hi(1)
 #  elif (AMREX_SPACEDIM == 2)
 #    define DIM_V(lo,hi) lo(1):hi(1),lo(2):hi(2)
 #  elif (AMREX_SPACEDIM == 3)
 #    define DIM_V(lo,hi) lo(1):hi(1),lo(2):hi(2),lo(3):hi(3)
+#  elif (AMREX_SPACEDIM == 4)
+#    define DIM_V(lo,hi) lo(1):hi(1),lo(2):hi(2),lo(3):hi(3),lo(4):hi(4)
+#  elif (AMREX_SPACEDIM == 5)
+#    define DIM_V(lo,hi) lo(1):hi(1),lo(2):hi(2),lo(3):hi(3),lo(4):hi(4),lo(5):hi(5)
+#  elif (AMREX_SPACEDIM == 6)
+#    define DIM_V(lo,hi) lo(1):hi(1),lo(2):hi(2),lo(3):hi(3),lo(4):hi(4),lo(5):hi(5),lo(6):hi(6)
 #  endif
 #endif
 

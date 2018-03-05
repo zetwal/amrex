@@ -65,10 +65,13 @@ CoordSys::SetOffset (const Real* x_lo)
 
 CoordSys::CoordSys ()
 {
-    AMREX_D_TERM(dx[0]=0;,dx[1]=0;,dx[2]=0;)
-    AMREX_D_TERM(inv_dx[0]=std::numeric_limits<Real>::infinity();,
-           inv_dx[1]=std::numeric_limits<Real>::infinity();,
-           inv_dx[2]=std::numeric_limits<Real>::infinity();)
+    AMREX_D_TERM6(dx[0]=0;,dx[1]=0;,dx[2]=0;,dx[3]=0;,dx[4]=0;,dx[5]=0;)
+    AMREX_D_TERM6(inv_dx[0]=std::numeric_limits<Real>::infinity();,
+                  inv_dx[1]=std::numeric_limits<Real>::infinity();,
+                  inv_dx[2]=std::numeric_limits<Real>::infinity();,
+                  inv_dx[3]=std::numeric_limits<Real>::infinity();,
+                  inv_dx[4]=std::numeric_limits<Real>::infinity();,
+                  inv_dx[5]=std::numeric_limits<Real>::infinity();)
     ok = false;
 }
 
@@ -458,12 +461,18 @@ operator<< (std::ostream&   os,
             const CoordSys& c)
 {
     os << '(' << (int) c.Coord() << ' ';
-    os << AMREX_D_TERM( '(' << c.Offset(0) , <<
-                  ',' << c.Offset(1) , <<
-                  ',' << c.Offset(2))  << ')';
-    os << AMREX_D_TERM( '(' << c.CellSize(0) , <<
-                  ',' << c.CellSize(1) , <<
-                  ',' << c.CellSize(2))  << ')';
+    os << AMREX_D_TERM6( '(' << c.Offset(0) , <<
+                         ',' << c.Offset(1) , <<
+                         ',' << c.Offset(2) , <<
+                         ',' << c.Offset(3) , <<
+                         ',' << c.Offset(4) , <<
+                         ',' << c.Offset(5))  << ')';
+    os << AMREX_D_TERM6( '(' << c.CellSize(0) , <<
+                         ',' << c.CellSize(1) , <<
+                         ',' << c.CellSize(2) , <<
+                         ',' << c.CellSize(3) , <<
+                         ',' << c.CellSize(4) , <<
+                         ',' << c.CellSize(5))  << ')';
     os << ' ' << int(c.ok) << ")\n";
     return os;
 }
@@ -480,13 +489,19 @@ operator>> (std::istream& is,
     int coord;
     is.ignore(BL_IGNORE_MAX, '(') >> coord;
     c.c_sys = (CoordSys::CoordType) coord;
-    AMREX_D_EXPR(is.ignore(BL_IGNORE_MAX, '(') >> c.offset[0],
-           is.ignore(BL_IGNORE_MAX, ',') >> c.offset[1],
-           is.ignore(BL_IGNORE_MAX, ',') >> c.offset[2]);
+    AMREX_D_EXPR6(is.ignore(BL_IGNORE_MAX, '(') >> c.offset[0],
+                  is.ignore(BL_IGNORE_MAX, ',') >> c.offset[1],
+                  is.ignore(BL_IGNORE_MAX, ',') >> c.offset[2],
+                  is.ignore(BL_IGNORE_MAX, ',') >> c.offset[3],
+                  is.ignore(BL_IGNORE_MAX, ',') >> c.offset[4],
+                  is.ignore(BL_IGNORE_MAX, ',') >> c.offset[5]));
     is.ignore(BL_IGNORE_MAX, ')');
-    AMREX_D_EXPR(is.ignore(BL_IGNORE_MAX, '(') >> c.dx[0],
-           is.ignore(BL_IGNORE_MAX, ',') >> c.dx[1],
-           is.ignore(BL_IGNORE_MAX, ',') >> c.dx[2]);
+    AMREX_D_EXPR6(is.ignore(BL_IGNORE_MAX, '(') >> c.dx[0],
+                  is.ignore(BL_IGNORE_MAX, ',') >> c.dx[1],
+                  is.ignore(BL_IGNORE_MAX, ',') >> c.dx[2],
+                  is.ignore(BL_IGNORE_MAX, ',') >> c.dx[3],
+                  is.ignore(BL_IGNORE_MAX, ',') >> c.dx[4],
+                  is.ignore(BL_IGNORE_MAX, ',') >> c.dx[5]));
     is.ignore(BL_IGNORE_MAX, ')');
     int tmp;
     is >> tmp;
@@ -512,9 +527,12 @@ CoordSys::Volume (const Real xlo[AMREX_SPACEDIM],
     switch (c_sys)
     {
     case cartesian:
-        return AMREX_D_TERM((xhi[0]-xlo[0]),
-                      *(xhi[1]-xlo[1]),
-                      *(xhi[2]-xlo[2]));
+        return AMREX_D_TERM6((xhi[0]-xlo[0]),
+                            *(xhi[1]-xlo[1]),
+                            *(xhi[2]-xlo[2]),
+                            *(xhi[3]-xlo[3]),
+                            *(xhi[4]-xlo[4]),
+                            *(xhi[5]-xlo[5]));
 #if (AMREX_SPACEDIM==2)
     case RZ:
         return (0.5*RZFACTOR)*(xhi[1]-xlo[1])*(xhi[0]*xhi[0]-xlo[0]*xlo[0]);
@@ -557,6 +575,33 @@ CoordSys::AreaLo (const IntVect& point,
     case 1: return dx[0]*dx[2];
     case 2: return dx[1]*dx[0];
     }
+#elif (AMREX_SPACEDIM==4)
+    switch (dir)
+    {
+    case 0: return dx[1]*dx[2]*dx[3];
+    case 1: return dx[0]*dx[2]*dx[3];
+    case 2: return dx[0]*dx[1]*dx[3];
+    case 3: return dx[0]*dx[1]*dx[2];
+    }
+#elif (AMREX_SPACEDIM==5)
+    switch (dir)
+    {
+    case 0: return dx[1]*dx[2]*dx[3]*dx[4];
+    case 1: return dx[0]*dx[2]*dx[3]*dx[4];
+    case 2: return dx[0]*dx[1]*dx[3]*dx[4];
+    case 3: return dx[0]*dx[1]*dx[2]*dx[4];
+    case 4: return dx[0]*dx[1]*dx[2]*dx[3];
+    }
+#else
+    switch (dir)
+    {
+    case 0: return dx[1]*dx[2]*dx[3]*dx[4]*dx[5];
+    case 1: return dx[0]*dx[2]*dx[3]*dx[4]*dx[5];
+    case 2: return dx[0]*dx[1]*dx[3]*dx[4]*dx[5];
+    case 3: return dx[0]*dx[1]*dx[2]*dx[4]*dx[5];
+    case 4: return dx[0]*dx[1]*dx[2]*dx[3]*dx[5];
+    case 5: return dx[0]*dx[1]*dx[2]*dx[3]*dx[4];
+    }
 #endif
     return 0;
 }
@@ -593,8 +638,36 @@ CoordSys::AreaHi (const IntVect& point,
     case 1: return dx[0]*dx[2];
     case 2: return dx[1]*dx[0];
     }
-#endif
+#elif (AMREX_SPACEDIM==4)
+    switch (dir)
+    {
+    case 0: return dx[1]*dx[2]*dx[3];
+    case 1: return dx[0]*dx[2]*dx[3];
+    case 2: return dx[0]*dx[1]*dx[3];
+    case 3: return dx[0]*dx[1]*dx[2];
+    }
+#elif (AMREX_SPACEDIM==5)
+    switch (dir)
+    {
+    case 0: return dx[1]*dx[2]*dx[3]*dx[4];
+    case 1: return dx[0]*dx[2]*dx[3]*dx[4];
+    case 2: return dx[0]*dx[1]*dx[3]*dx[4];
+    case 3: return dx[0]*dx[1]*dx[2]*dx[4];
+    case 4: return dx[0]*dx[1]*dx[2]*dx[3];
+    }
+#elif (AMREX_SPACEDIM==5)
+    switch (dir)
+    {
+    case 0: return dx[1]*dx[2]*dx[3]*dx[4]*dx[5];
+    case 1: return dx[0]*dx[2]*dx[3]*dx[4]*dx[5];
+    case 2: return dx[0]*dx[1]*dx[3]*dx[4]*dx[5];
+    case 3: return dx[0]*dx[1]*dx[2]*dx[4]*dx[5];
+    case 4: return dx[0]*dx[1]*dx[2]*dx[3]*dx[5];
+    case 5: return dx[0]*dx[1]*dx[2]*dx[3]*dx[4];
+    }
+#else
     return 0;
+#endif
 }
 
 

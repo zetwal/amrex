@@ -3,24 +3,24 @@
 
 #ifdef BL_LANG_FORT
 #    define FORT_SETVOL      setvol
-#    define FORT_SETVOLPT      setvolpt
+#    define FORT_SETVOLPT    setvolpt
 #    define FORT_SETAREA     setarea
 #    define FORT_SETDLOGA    setdloga
 #else
 #  ifdef BL_FORT_USE_UPPERCASE
 #    define FORT_SETVOL      SETVOL
-#    define FORT_SETVOLPT      SETVOLPT
+#    define FORT_SETVOLPT    SETVOLPT
 #    define FORT_SETAREA     SETAREA
 #    define FORT_SETDLOGA    SETDLOGA
 #  else
 #  ifdef BL_FORT_USE_LOWERCASE
 #    define FORT_SETVOL      setvol
-#    define FORT_SETVOLPT      setvolpt
+#    define FORT_SETVOLPT    setvolpt
 #    define FORT_SETAREA     setarea
 #    define FORT_SETDLOGA    setdloga
 #  else
 #    define FORT_SETVOL      setvol_
-#    define FORT_SETVOLPT      setvolpt_
+#    define FORT_SETVOLPT    setvolpt_
 #    define FORT_SETAREA     setarea_
 #    define FORT_SETDLOGA    setdloga_
 #  endif

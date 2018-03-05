@@ -73,7 +73,8 @@ public:
     //! Returns the overall size of the domain by multiplying the ProbLength's together
     static Real ProbSize ()
     {
-        return AMREX_D_TERM(prob_domain.length(0),*prob_domain.length(1),*prob_domain.length(2));
+        return AMREX_D_TERM6(prob_domain.length(0),*prob_domain.length(1),*prob_domain.length(2),
+                             prob_domain.length(4),*prob_domain.length(5),*prob_domain.length(6));
     }
     //! Returns length of problem domain in specified dimension.
     static Real ProbLength (int dir) { return prob_domain.length(dir); }
@@ -125,27 +126,35 @@ public:
     //! Is domain periodic in any direction?
     static bool isAnyPeriodic ()
     {
-        return AMREX_D_TERM(isPeriodic(0),||isPeriodic(1),||isPeriodic(2));
+        return AMREX_D_TERM6(isPeriodic(0),||isPeriodic(1),||isPeriodic(2),
+                             isPeriodic(3),||isPeriodic(4),||isPeriodic(5));
     }
     //! Is domain periodic in all directions?
     static bool isAllPeriodic ()
     {
-        return AMREX_D_TERM(isPeriodic(0),&&isPeriodic(1),&&isPeriodic(2));
+        return AMREX_D_TERM6(isPeriodic(0),&&isPeriodic(1),&&isPeriodic(2),
+                             isPeriodic(3),&&isPeriodic(4),&&isPeriodic(5));
     }
     //! What's period in specified direction?
     int period (int dir) const { BL_ASSERT(is_periodic[dir]); return domain.length(dir); }
 
     Periodicity periodicity () const {
-	return Periodicity(IntVect(AMREX_D_DECL(domain.length(0) * is_periodic[0],
-					  domain.length(1) * is_periodic[1],
-					  domain.length(2) * is_periodic[2])));
+	return Periodicity(IntVect(AMREX_D_DECL6(domain.length(0) * is_periodic[0],
+					         domain.length(1) * is_periodic[1],
+					         domain.length(2) * is_periodic[2],
+					         domain.length(3) * is_periodic[3],
+					         domain.length(4) * is_periodic[4],
+       					         domain.length(5) * is_periodic[5])));
     }
 
     static Periodicity periodicity (const Box& b) {
         AMREX_ASSERT(b.cellCentered());
-	return Periodicity(IntVect(AMREX_D_DECL(b.length(0) * is_periodic[0],
-                                                b.length(1) * is_periodic[1],
-                                                b.length(2) * is_periodic[2])));
+	return Periodicity(IntVect(AMREX_D_DECL6(b.length(0) * is_periodic[0],
+                                                 b.length(1) * is_periodic[1],
+                                                 b.length(2) * is_periodic[2],
+                                                 b.length(3) * is_periodic[3],
+                                                 b.length(4) * is_periodic[4],
+                                                 b.length(5) * is_periodic[5])));
     }
 
     /**

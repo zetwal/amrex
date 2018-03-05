@@ -1076,9 +1076,12 @@ DistributionMapping::SFCProcessorMapDoIt (const BoxArray&          boxes,
 
         const SFCToken& token = tokens.back();
 
-        AMREX_D_TERM(maxijk = std::max(maxijk, token.m_idx[0]);,
-                     maxijk = std::max(maxijk, token.m_idx[1]);,
-                     maxijk = std::max(maxijk, token.m_idx[2]););
+        AMREX_D_TERM6(maxijk = std::max(maxijk, token.m_idx[0]);,
+                      maxijk = std::max(maxijk, token.m_idx[1]);,
+                      maxijk = std::max(maxijk, token.m_idx[2]);,
+                      maxijk = std::max(maxijk, token.m_idx[3]);,
+                      maxijk = std::max(maxijk, token.m_idx[4]);,
+                      maxijk = std::max(maxijk, token.m_idx[5]););
     }
     //
     // Set SFCToken::MaxPower for BoxArray.
@@ -1288,9 +1291,12 @@ DistributionMapping::RRSFCDoIt (const BoxArray&          boxes,
 
         const SFCToken& token = tokens.back();
 
-        AMREX_D_TERM(maxijk = std::max(maxijk, token.m_idx[0]);,
-               maxijk = std::max(maxijk, token.m_idx[1]);,
-               maxijk = std::max(maxijk, token.m_idx[2]););
+        AMREX_D_TERM6(maxijk = std::max(maxijk, token.m_idx[0]);,
+                      maxijk = std::max(maxijk, token.m_idx[1]);,
+                      maxijk = std::max(maxijk, token.m_idx[2]);,
+                      maxijk = std::max(maxijk, token.m_idx[3]);,
+                      maxijk = std::max(maxijk, token.m_idx[4]);,
+                      maxijk = std::max(maxijk, token.m_idx[5]););
     }
     //
     // Set SFCToken::MaxPower for BoxArray.
@@ -1457,9 +1463,12 @@ DistributionMapping::PFCProcessorMapDoIt (const BoxArray&          boxes,
 	const Box& bx = boxes[i];
         tokens.push_back(PFCToken(i, bx.smallEnd(), wgts[i]));
         const PFCToken &token = tokens.back();
-        AMREX_D_TERM(maxijk = std::max(maxijk, token.m_idx[0]);,
-               maxijk = std::max(maxijk, token.m_idx[1]);,
-               maxijk = std::max(maxijk, token.m_idx[2]););
+        AMREX_D_TERM6(maxijk = std::max(maxijk, token.m_idx[0]);,
+                      maxijk = std::max(maxijk, token.m_idx[1]);,
+                      maxijk = std::max(maxijk, token.m_idx[2]);,
+                      maxijk = std::max(maxijk, token.m_idx[3]);,
+                      maxijk = std::max(maxijk, token.m_idx[4]);,
+                      maxijk = std::max(maxijk, token.m_idx[5]););
     }
 
     std::sort(tokens.begin(), tokens.end(), PFCToken::Compare());  // sfc order
@@ -2752,9 +2761,12 @@ DistributionMapping::makeSFC (const BoxArray& ba)
 
         const SFCToken& token = tokens.back();
 
-        AMREX_D_TERM(maxijk = std::max(maxijk, token.m_idx[0]);,
-                     maxijk = std::max(maxijk, token.m_idx[1]);,
-                     maxijk = std::max(maxijk, token.m_idx[2]););
+        AMREX_D_TERM6(maxijk = std::max(maxijk, token.m_idx[0]);,
+                      maxijk = std::max(maxijk, token.m_idx[1]);,
+                      maxijk = std::max(maxijk, token.m_idx[2]);,
+                      maxijk = std::max(maxijk, token.m_idx[3]);,
+                      maxijk = std::max(maxijk, token.m_idx[4]);,
+                      maxijk = std::max(maxijk, token.m_idx[5]););
     }
     //
     // Set SFCToken::MaxPower for BoxArray.

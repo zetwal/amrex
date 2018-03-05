@@ -24,11 +24,17 @@ int     FabArrayBase::MaxComp;
 IntVect FabArrayBase::mfiter_tile_size(1024000);
 #elif AMREX_SPACEDIM == 2
 IntVect FabArrayBase::mfiter_tile_size(1024000,1024000);
-#else
+#elif AMREX_SPACEDIM == 3
 IntVect FabArrayBase::mfiter_tile_size(1024000,8,8);
+#elif AMREX_SPACEDIM == 4
+IntVect FabArrayBase::mfiter_tile_size(1024000,8,8,8);
+#elif AMREX_SPACEDIM == 5
+IntVect FabArrayBase::mfiter_tile_size(1024000,8,8,8,8);
+#else
+IntVect FabArrayBase::mfiter_tile_size(1024000,8,8,8,8,8);
 #endif
-IntVect FabArrayBase::comm_tile_size(AMREX_D_DECL(1024000, 8, 8));
-IntVect FabArrayBase::mfghostiter_tile_size(AMREX_D_DECL(1024000, 8, 8));
+IntVect FabArrayBase::comm_tile_size(AMREX_D_DECL6(1024000, 8, 8, 8, 8, 8));
+IntVect FabArrayBase::mfghostiter_tile_size(AMREX_D_DECL6(1024000, 8, 8, 8, 8, 8));
 
 int FabArrayBase::nFabArrays(0);
 

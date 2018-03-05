@@ -28,9 +28,12 @@ Box::Box (const IntVect& small,
           const int*     vec_len)
     :
     smallend(small),
-    bigend(AMREX_D_DECL(small[0]+vec_len[0]-1,
-                  small[1]+vec_len[1]-1,
-                  small[2]+vec_len[2]-1))
+    bigend(AMREX_D_DECL6(small[0]+vec_len[0]-1,
+                         small[1]+vec_len[1]-1,
+                         small[2]+vec_len[2]-1,
+                         small[3]+vec_len[3]-1,
+                         small[4]+vec_len[4]-1,
+                         small[5]+vec_len[5]-1))
 {}
 
 Box::Box (const IntVect& small,
@@ -239,9 +242,12 @@ Box::grow (Orientation face,
 long
 Box::numPts () const
 {
-    return AMREX_D_TERM( static_cast<long>(length(0)), 
-                  *static_cast<long>(length(1)),
-                  *static_cast<long>(length(2)));
+    return AMREX_D_TERM6( static_cast<long>(length(0)), 
+                         *static_cast<long>(length(1)),
+                         *static_cast<long>(length(2)),
+                         *static_cast<long>(length(3)),
+                         *static_cast<long>(length(4)),
+                         *static_cast<long>(length(5)));
 }
 
 double
@@ -249,15 +255,19 @@ Box::d_numPts () const
 {
     BL_ASSERT(ok());
 
-    return AMREX_D_TERM(double(length(0)), *double(length(1)), *double(length(2)));
+    return AMREX_D_TERM6(double(length(0)), *double(length(1)), *double(length(2)),
+                         double(length(3)), *double(length(4)), *double(length(5)));
 }
 
 long
 Box::volume () const
 {
-    return AMREX_D_TERM( static_cast<long>(length(0)-btype[0]), 
-                  *static_cast<long>(length(1)-btype[1]),
-                  *static_cast<long>(length(2)-btype[2]));
+    return AMREX_D_TERM6( static_cast<long>(length(0)-btype[0]), 
+                         *static_cast<long>(length(1)-btype[1]),
+                         *static_cast<long>(length(1)-btype[2]),
+                         *static_cast<long>(length(1)-btype[3]),
+                         *static_cast<long>(length(1)-btype[4]),
+                         *static_cast<long>(length(2)-btype[5]));
 }
 
 Box&
@@ -301,11 +311,32 @@ Box::next (IntVect& p) const
     {
 	p[0] = smallend[0];
 	++p[1];
-#if (AMREX_SPACEDIM == 3)
+#if (AMREX_SPACEDIM >= 3)
 	if (p[1] > bigend[1])
 	{
 	    p[1] = smallend[1];
 	    ++p[2];
+#if (AMREX_SPACEDIM >= 4)
+	    if (p[2] > bigend[2])
+    	    {
+	        p[2] = smallend[2];
+	        ++p[3];
+#if (AMREX_SPACEDIM >= 5)
+	        if (p[3] > bigend[3])
+	        {
+	            p[3] = smallend[3];
+	            ++p[4];
+#if (AMREX_SPACEDIM == 6)
+	            if (p[4] > bigend[4])
+	            {
+	                p[4] = smallend[4];
+	                ++p[5];
+	            }
+#endif
+	        }
+#endif
+	    }
+#endif
 	}
 #endif
     }
@@ -317,19 +348,22 @@ refine (const Box& b,
                 int        ref_ratio)
 {
     Box result = b;
-    result.refine(IntVect(AMREX_D_DECL(ref_ratio,ref_ratio,ref_ratio)));
+    result.refine(IntVect(AMREX_D_DECL6(ref_ratio,ref_ratio,ref_ratio,
+                                        ref_ratio,ref_ratio,ref_ratio)));
     return result;
 }
 
 Box&
 Box::refine (int ref_ratio)
 {
-    return this->refine(IntVect(AMREX_D_DECL(ref_ratio,ref_ratio,ref_ratio)));
+    return this->refine(IntVect(AMREX_D_DECL6(ref_ratio,ref_ratio,ref_ratio,
+                                              ref_ratio,ref_ratio,ref_ratio)));
+    return result;
 }
 
 Box
 refine (const Box&     b,
-                const IntVect& ref_ratio)
+        const IntVect& ref_ratio)
 {
     Box result = b;
     result.refine(ref_ratio);
@@ -463,14 +497,16 @@ coarsen (const Box& b,
                  int        ref_ratio)
 {
     Box result = b;
-    result.coarsen(IntVect(AMREX_D_DECL(ref_ratio,ref_ratio,ref_ratio)));
+    result.coarsen(IntVect(AMREX_D_DECL6(ref_ratio,ref_ratio,ref_ratio,
+                                         ref_ratio,ref_ratio,ref_ratio)));
     return result;
 }
 
 Box&
 Box::coarsen (int ref_ratio)
 {
-    return this->coarsen(IntVect(AMREX_D_DECL(ref_ratio,ref_ratio,ref_ratio)));
+    return this->coarsen(IntVect(AMREX_D_DECL6(ref_ratio,ref_ratio,ref_ratio,
+                                               ref_ratio,ref_ratio,ref_ratio)));
 }
 
 Box
@@ -738,9 +774,12 @@ bool
 Box::sameSize (const Box& b) const
 {
     BL_ASSERT(sameType(b));
-    return AMREX_D_TERM(length(0) == b.length(0),
-                  && length(1)==b.length(1),
-                  && length(2)==b.length(2));
+    return AMREX_D_TERM6(length(0)==b.length(0),
+                      && length(1)==b.length(1),
+                      && length(2)==b.length(2),
+                      && length(3)==b.length(3),
+                      && length(4)==b.length(4),
+                      && length(5)==b.length(5));
 }
 
 int
@@ -770,6 +809,12 @@ Box::isSquare () const
     return (sz[0] == sz[1]);
 #elif AMREX_SPACEDIM==3
     return (sz[0] == sz[1] && (sz[1] == sz[2]));
+#elif AMREX_SPACEDIM==4
+    return (sz[0] == sz[1] && (sz[1] == sz[2]) && (sz[2] == sz[3]));
+#elif AMREX_SPACEDIM==5
+    return (sz[0] == sz[1] && (sz[1] == sz[2]) && (sz[2] == sz[3]) && (sz[3] == sz[4]));
+#elif AMREX_SPACEDIM==6
+    return (sz[0] == sz[1] && (sz[1] == sz[2]) && (sz[2] == sz[3]) && (sz[3] == sz[4]) && (sz[4] == sz[5]));
 #endif
 }
 
@@ -816,16 +861,25 @@ BoxCommHelper::BoxCommHelper (const Box& bx, int* p_)
 	p = &v[0];
     }
 
-    AMREX_D_EXPR(p[0]               = bx.smallend[0],
-	   p[1]               = bx.smallend[1],
-	   p[2]               = bx.smallend[2]);
-    AMREX_D_EXPR(p[0+AMREX_SPACEDIM]   = bx.bigend[0],
-	   p[1+AMREX_SPACEDIM]   = bx.bigend[1],
-	   p[2+AMREX_SPACEDIM]   = bx.bigend[2]);
+    AMREX_D_EXPR6(p[0]               = bx.smallend[0],
+	          p[1]               = bx.smallend[1],
+	          p[2]               = bx.smallend[2],
+	          p[3]               = bx.smallend[3],
+	          p[4]               = bx.smallend[4],
+       	          p[5]               = bx.smallend[5]);
+    AMREX_D_EXPR6(p[0+AMREX_SPACEDIM]   = bx.bigend[0],
+	          p[1+AMREX_SPACEDIM]   = bx.bigend[1],
+	          p[2+AMREX_SPACEDIM]   = bx.bigend[2],
+	          p[3+AMREX_SPACEDIM]   = bx.bigend[3],
+	          p[4+AMREX_SPACEDIM]   = bx.bigend[4],
+      	          p[5+AMREX_SPACEDIM]   = bx.bigend[5]);
     const IntVect& typ = bx.btype.ixType();
-    AMREX_D_EXPR(p[0+AMREX_SPACEDIM*2] = typ[0],
-	   p[1+AMREX_SPACEDIM*2] = typ[1],
-	   p[2+AMREX_SPACEDIM*2] = typ[2]);
+    AMREX_D_EXPR6(p[0+AMREX_SPACEDIM*2] = typ[0],
+	          p[1+AMREX_SPACEDIM*2] = typ[1],
+	          p[2+AMREX_SPACEDIM*2] = typ[2],
+	          p[3+AMREX_SPACEDIM*2] = typ[3],
+	          p[4+AMREX_SPACEDIM*2] = typ[4],
+	          p[5+AMREX_SPACEDIM*2] = typ[5]);
 }
 
 void
