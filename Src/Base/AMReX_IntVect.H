@@ -89,14 +89,14 @@ public:
     * coordinates.  AMREX_D_DECL6 is a macro that sets the constructor
     * to take AMREX_SPACEDIM arguments.
     */
-    IntVect (AMREX_D_DECL(int i, int j, int k, int m, int n, int p)) 
-       { AMREX_D_EXPR(vect[0] = i, vect[1] = j, vect[2] = k,
+    IntVect (AMREX_D_DECL6(int i, int j, int k, int m, int n, int p)) 
+       { AMREX_D_EXPR6(vect[0] = i, vect[1] = j, vect[2] = k,
                       vect[3] = m, vect[4] = n, vect[5] = p); }
 
 #if (AMREX_SPACEDIM > 1)
     explicit IntVect (int i) 
-       { AMREX_D_EXPR(vect[0] = i, vect[1] = i, vect[2] = i,
-                      vect[3] = m, vect[4] = n, vect[5] = p); }
+       { AMREX_D_EXPR6(vect[0] = i, vect[1] = i, vect[2] = i,
+                       vect[3] = m, vect[4] = n, vect[5] = p); }
 #endif
 
     /**
@@ -235,7 +235,8 @@ public:
     //! Unary plus -- for completeness.
     const IntVect operator+ () const { return *this; }
     //! Unary Minus -- negates all components.
-    IntVect operator- () const { return IntVect(AMREX_D_DECL(-vect[0], -vect[1], -vect[2] )); }
+    IntVect operator- () const { 
+        return IntVect(AMREX_D_DECL6(-vect[0], -vect[1], -vect[2], -vect[3], -vect[4], -vect[5]); }
     //! Modifies IntVect by addition of a scalar to each component.
     IntVect& operator+= (int s)
     {
@@ -329,8 +330,8 @@ public:
     //! Returns component-wise division of IntVect by s.
     IntVect operator/ (int s) const
     {
-        return IntVect(AMREX_D_DECL(vect[0] / s, vect[1] / s, vect[2] / s,
-                                    vect[3] / s, vect[4] / s, vect[5] / s));
+        return IntVect(AMREX_D_DECL6(vect[0] / s, vect[1] / s, vect[2] / s,
+                                     vect[3] / s, vect[4] / s, vect[5] / s));
     }
     //! Modifies IntVect by taking component-wise min with argument.
     IntVect& min (const IntVect& p)
@@ -355,7 +356,8 @@ public:
         return *this;
     }
     //! Modify IntVect by multiplying each coordinate by s.
-    IntVect& scale (int s) { AMREX_D_EXPR(vect[0] *= s, vect[1] *= s, vect[2] *= s); return *this; }
+    IntVect& scale (int s) { 
+       AMREX_D_EXPR6(vect[0] *= s, vect[1] *= s, vect[2] *= s, vect[3] *= s, vect[4] *= s, vect[5] *= s); return *this; }
     /**
     * \brief Modify IntVect by reflecting it in the plane defined by
     * the index ref_ix and with normal in the direction of idir.
