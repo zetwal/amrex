@@ -44,18 +44,15 @@ public:
 	    return ret0 ^ (ret1 << shift1) ^ (ret2 << shift2);
 #elif AMREX_SPACEDIM == 4
             std::size_t h = ret0 ^ (ret1 << shift1) ^ (ret2 << shift2);
-            h ^= ret3 + 0x9e3779b9 + (h << 6) + (h >> 2);
-            return h;
+            return h ^ (ret3 << 6);
 #elif AMREX_SPACEDIM == 5
             std::size_t h1 = ret0 ^ (ret1 << shift1) ^ (ret2 << shift2);
             std::size_t h2  = ret3 ^ (ret4 << shift1);
-            h1 ^= h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2);
-            return h1;
+            return h1 ^ (h2 << 6);
 #else
             std::size_t h1 = ret0 ^ (ret1 << shift1) ^ (ret2 << shift2);
             std::size_t h2  = ret3 ^ (ret4 << shift1) ^ (ret5 << shift2);
-            h1 ^= h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2);
-            return h1;
+            return h1 ^ h2;
 #endif
 	}
     };
