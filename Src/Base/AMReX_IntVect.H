@@ -31,11 +31,6 @@ public:
     private:
 	static constexpr unsigned shift1 = sizeof(size_t)>=8 ? 20 : 10;
 	static constexpr unsigned shift2 = sizeof(size_t)>=8 ? 40 : 20;
-#if (AMREX_SPACEDIM > 3)
-	static constexpr unsigned shift3 = sizeof(size_t)>=8 ? 40 : 20;
-	static constexpr unsigned shift4 = sizeof(size_t)>=8 ? 40 : 20;
-	static constexpr unsigned shift5 = sizeof(size_t)>=8 ? 40 : 20;
-#endif
     public:
 	std::size_t operator()(const IntVect& vec) const
         {
@@ -46,16 +41,21 @@ public:
 #elif AMREX_SPACEDIM == 2
 	    return ret0 ^ (ret1 << shift1);
 #elif AMREX_SPACEDIM == 3
-	    return ret0 ^ (ret1 << shift1) ^ (ret2 << shift2);	    
+	    return ret0 ^ (ret1 << shift1) ^ (ret2 << shift2);
 #elif AMREX_SPACEDIM == 4
-	    return ret0 ^ (ret1 << shift1) ^ (ret1 << shift1) ^ (ret2 << shift2)
-	                ^ (ret3 << shift3);
+            std::size_t h = ret0 ^ (ret1 << shift1) ^ (ret2 << shift2);
+            h ^= ret3 + 0x9e3779b9 + (h << 6) + (h >> 2);
+            return h;
 #elif AMREX_SPACEDIM == 5
-	    return ret0 ^ (ret1 << shift1) ^ (ret1 << shift1) ^ (ret2 << shift2)
-	                ^ (ret3 << shift3) ^ (ret4 << shift4);
+            std::size_t h1 = ret0 ^ (ret1 << shift1) ^ (ret2 << shift2);
+            std::size_t h2  = ret3 ^ (ret4 << shift1);
+            h1 ^= h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2);
+            return h1;
 #else
-	    return ret0 ^ (ret1 << shift1) ^ (ret1 << shift1) ^ (ret2 << shift2)
-	                ^ (ret3 << shift3) ^ (ret4 << shift4) ^ (ret5 << shift5);
+            std::size_t h1 = ret0 ^ (ret1 << shift1) ^ (ret2 << shift2);
+            std::size_t h2  = ret3 ^ (ret4 << shift1) ^ (ret5 << shift2);
+            h1 ^= h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2);
+            return h1;
 #endif
 	}
     };

@@ -27,7 +27,7 @@
 #error AMREX_SPACEDIM must be defined
 #endif
 
-#if  (AMREX_SPACEDIM != 1 && AMREX_SPACEDIM !=2 && AMREX_SPACEDIM != 3 && 
+#if  (AMREX_SPACEDIM != 1 && AMREX_SPACEDIM !=2 && AMREX_SPACEDIM != 3 && \
       AMREX_SPACEDIM != 4 && AMREX_SPACEDIM !=5 && AMREX_SPACEDIM != 6)
 #error AMREX_SPACEDIM must be either 1, 2, 3, 4, 5 or 6
 #endif
