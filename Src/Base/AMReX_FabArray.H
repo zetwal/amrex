@@ -458,6 +458,26 @@ public:
     template <class F=FAB, class = typename std::enable_if<IsBaseFab<F>::value>::type >
     void setBndry (value_type val, int strt_comp, int ncomp);
 
+    //! Set ncomp values in the boundary region, starting at start_comp to val.
+    template <class F=FAB, class = typename std::enable_if<IsBaseFab<F>::value>::type >
+    void setBndryTestCell (value_type val, int strt_comp, int ncomp);
+
+    //! Set ncomp values in the boundary region, starting at start_comp to val.
+    template <class F=FAB, class = typename std::enable_if<IsBaseFab<F>::value>::type >
+    void setBndryFusedDiff (value_type val, int strt_comp, int ncomp);
+
+    //! Set ncomp values in the boundary region, starting at start_comp to val.
+    template <class F=FAB, class = typename std::enable_if<IsBaseFab<F>::value>::type >
+    void setBndryFusedDiffEmpty (value_type val, int strt_comp, int ncomp);
+
+    //! Set ncomp values in the boundary region, starting at start_comp to val.
+    template <class F=FAB, class = typename std::enable_if<IsBaseFab<F>::value>::type >
+    void setBndryFusedTestCell (value_type val, int strt_comp, int ncomp);
+
+    //! Set ncomp values in the boundary region, starting at start_comp to val.
+    template <class F=FAB, class = typename std::enable_if<IsBaseFab<F>::value>::type >
+    void setBndryFusedTestCellEmpty (value_type val, int strt_comp, int ncomp);
+
    //! Set all values outside the Geometry domain to val.
     template <class F=FAB, class = typename std::enable_if<IsBaseFab<F>::value>::type >
     void setDomainBndry (value_type val, const Geometry& goem);
@@ -1449,6 +1469,16 @@ FabArray<FAB>::setFab (const MFIter& mfi,
     m_fabs_v[li] = elem;
 }
 
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+
+
+
 template <class FAB>
 template <class,class>
 void
@@ -1464,6 +1494,8 @@ FabArray<FAB>::setBndry (value_type val,
                          int        strt_comp,
                          int        ncomp)
 {
+    BL_PROFILE("setBndry");
+
     if (n_grow.max() > 0)
     {
         if (Gpu::inLaunchRegion())
@@ -1507,6 +1539,256 @@ FabArray<FAB>::setBndry (value_type val,
         }
     }
 }
+
+template <class FAB>
+template <class FOO, class BAR>
+void
+FabArray<FAB>::setBndryTestCell (value_type val,
+                                 int        strt_comp,
+                                 int        ncomp)
+{
+    BL_PROFILE("setBndryTestCell");
+
+    if (n_grow.max() > 0)
+    {
+        if (Gpu::inLaunchRegion())
+        {
+            for (MFIter fai(*this); fai.isValid(); ++fai)
+            {
+                const Box& gbx = fai.fabbox();
+                const Box& vbx = fai.validbox();
+                auto fab = this->array(fai);
+
+                AMREX_PARALLEL_FOR_4D(gbx, ncomp, i, j, k, n,
+                {
+                    if (!(vbx.contains({i, j, k})))
+                    {
+                        fab(i,j,k,n) = val;
+                    }
+                });
+            }
+        }
+        else
+        {
+#ifdef _OPENMP
+#pragma omp parallel
+#endif
+            for (MFIter fai(*this); fai.isValid(); ++fai)
+            {
+                get(fai).setComplement(val, fai.validbox(), strt_comp, ncomp);
+            }
+        }
+    }
+}
+
+template <class FAB>
+template <class FOO, class BAR>
+void
+FabArray<FAB>::setBndryFusedDiff (value_type val,
+                                  int        strt_comp,
+                                  int        ncomp)
+{
+    BL_PROFILE("setBndryFusedDiff");
+
+    if (n_grow.max() > 0)
+    {
+        if (Gpu::inLaunchRegion())
+        {
+            for (MFIter fai(*this); fai.isValid(); ++fai)
+            {
+                const Box& gbx = fai.fabbox();
+                const Box& vbx = fai.validbox();
+                BoxList blst = amrex::boxDiff(gbx,vbx);
+                const int nboxes = blst.size();
+
+                if (nboxes > 0)
+                {
+                    Box const* pboxes = blst.data().data();
+                    auto fab = this->array(fai);
+
+                    Vector<Array4BoxTag<Real>> tags(nboxes);
+                    for (int b = 0; b<nboxes; ++b) {
+                        tags[b] = Array4BoxTag<Real>{fab, pboxes[b]};
+                    }
+
+                    amrex::ParallelFor(tags, ncomp,
+                    [=] AMREX_GPU_DEVICE (int i, int j, int k, int n, Array4<Real> arr) noexcept
+                    {
+                        arr(i,j,k,n) = val;
+                    });
+                }
+            }
+        }
+        else
+        {
+#ifdef _OPENMP
+#pragma omp parallel
+#endif
+            for (MFIter fai(*this); fai.isValid(); ++fai)
+            {
+                get(fai).setComplement(val, fai.validbox(), strt_comp, ncomp);
+            }
+        }
+    }
+}
+
+template <class FAB>
+template <class FOO, class BAR>
+void
+FabArray<FAB>::setBndryFusedDiffEmpty (value_type val,
+                                       int        strt_comp,
+                                       int        ncomp)
+{
+    BL_PROFILE("$$$ setBndryFusedDiffEmpty");
+
+    if (n_grow.max() > 0)
+    {
+        if (Gpu::inLaunchRegion())
+        {
+            for (MFIter fai(*this); fai.isValid(); ++fai)
+            {
+                const Box& gbx = fai.fabbox();
+                const Box& vbx = fai.validbox();
+                BoxList blst = amrex::boxDiff(gbx,vbx);
+                const int nboxes = blst.size();
+
+                if (nboxes > 0)
+                {
+                    Box const* pboxes = blst.data().data();
+                    auto fab = this->array(fai);
+
+                    Vector<Array4BoxTag<Real>> tags(nboxes);
+                    for (int b = 0; b<nboxes; ++b) {
+                        tags[b] = Array4BoxTag<Real>{fab, pboxes[b]};
+                    }
+
+                    amrex::ParallelForEmpty(tags, ncomp,
+                    [=] AMREX_GPU_DEVICE (int i, int j, int k, int n, Array4<Real> arr) noexcept
+                    {
+                        arr(i,j,k,n) = val;
+                    });
+                }
+            }
+        }
+        else
+        {
+#ifdef _OPENMP
+#pragma omp parallel
+#endif
+            for (MFIter fai(*this); fai.isValid(); ++fai)
+            {
+                get(fai).setComplement(val, fai.validbox(), strt_comp, ncomp);
+            }
+        }
+    }
+}
+
+template <class FAB>
+template <class FOO, class BAR>
+void
+FabArray<FAB>::setBndryFusedTestCell (value_type val,
+                                      int        strt_comp,
+                                      int        ncomp)
+{
+    BL_PROFILE("setBndryFusedTestCell");
+
+    if (n_grow.max() > 0)
+    {
+        if (Gpu::inLaunchRegion())
+        {
+            Vector<Array4BoxTag<Real>> tags(this->local_size());
+
+            for (MFIter fai(*this); fai.isValid(); ++fai)
+            {
+                int idx = fai.tileIndex();
+                const Box& gbx = fai.fabbox();
+                auto fab = this->array(fai);
+                tags[idx] = Array4BoxTag<Real>{fab, gbx};
+            }
+
+            IntVect grow_iv = -nGrowVect();
+
+            amrex::ParallelFor(tags, ncomp, 
+            [=] AMREX_GPU_DEVICE (int i, int j, int k, int n, Array4<Real> arr) noexcept
+            {
+                Box gbx(arr);
+                Box vbx = gbx.grow(grow_iv);
+                if ( !(vbx.contains({i,j,k})) )
+                {
+                    arr(i,j,k,n) = val;
+                }
+            });
+        }
+        else
+        {
+#ifdef _OPENMP
+#pragma omp parallel
+#endif
+            for (MFIter fai(*this); fai.isValid(); ++fai)
+            {
+                get(fai).setComplement(val, fai.validbox(), strt_comp, ncomp);
+            }
+        }
+    }
+}
+
+template <class FAB>
+template <class FOO, class BAR>
+void
+FabArray<FAB>::setBndryFusedTestCellEmpty (value_type val,
+                                           int        strt_comp,
+                                           int        ncomp)
+{
+    BL_PROFILE("$$$ setBndryFusedTestCellEmpty");
+
+    if (n_grow.max() > 0)
+    {
+        if (Gpu::inLaunchRegion())
+        {
+            Vector<Array4BoxTag<Real>> tags(this->local_size());
+
+            for (MFIter fai(*this); fai.isValid(); ++fai)
+            {
+                int idx = fai.tileIndex();
+                const Box& gbx = fai.fabbox();
+                auto fab = this->array(fai);
+                tags[idx] = Array4BoxTag<Real>{fab, gbx};
+            }
+
+            IntVect grow_iv = -nGrowVect();
+
+            amrex::ParallelForEmpty(tags, ncomp, 
+            [=] AMREX_GPU_DEVICE (int i, int j, int k, int n, Array4<Real> arr) noexcept
+            {
+                Box gbx(arr);
+                Box vbx = gbx.grow(grow_iv);
+                if ( !(vbx.contains({i,j,k})) )
+                {
+                    arr(i,j,k,n) = val;
+                }
+            });
+        }
+        else
+        {
+#ifdef _OPENMP
+#pragma omp parallel
+#endif
+            for (MFIter fai(*this); fai.isValid(); ++fai)
+            {
+                get(fai).setComplement(val, fai.validbox(), strt_comp, ncomp);
+            }
+        }
+    }
+}
+
+
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 template <class FAB>
 template <class,class>

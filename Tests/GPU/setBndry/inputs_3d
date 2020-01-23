@@ -1,0 +1,5 @@
+n_cell = 256 
+max_grid_size = 128
+nghost = 1 
+
+#amrex.v = 1

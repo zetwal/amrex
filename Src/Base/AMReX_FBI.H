@@ -108,6 +108,90 @@ ParallelFor (Vector<Array4BoxTag<T> > const& tags, int ncomp, F && f)
     The_Device_Arena()->free(d_nwarps);
     The_Device_Arena()->free(d_tags);
 }
+
+template <class T, class F>
+void
+ParallelForEmpty (Vector<Array4BoxTag<T> > const& tags, int ncomp, F && f)
+{
+    typedef Array4BoxTag<T> TagType;
+
+    const int ntags = tags.size();
+    if (ntags == 0) return;
+
+    int ntotwarps = 0;
+    Vector<int> nwarps;
+    nwarps.reserve(ntags+1);
+    for (int i = 0; i < ntags; ++i)
+    {
+        auto& tag = tags[i];
+        nwarps.push_back(ntotwarps);
+        ntotwarps += static_cast<int>(tag.dbox.numPts()+Gpu::Device::warp_size-1)/Gpu::Device::warp_size;
+    }
+    nwarps.push_back(ntotwarps);
+
+    std::size_t nbytes = ntags*sizeof(TagType);
+    auto d_tags = static_cast<TagType*>(The_Device_Arena()->alloc(nbytes));
+    Gpu::htod_memcpy(d_tags, tags.data(), nbytes);
+
+    nbytes = (ntags+1)*sizeof(int);
+    auto d_nwarps = static_cast<int*>(The_Device_Arena()->alloc(nbytes));
+    Gpu::htod_memcpy(d_nwarps, nwarps.data(), nbytes);
+
+    constexpr int nthreads = 128;
+    constexpr int nwarps_per_block = nthreads/Gpu::Device::warp_size;
+    int nblocks = (ntotwarps + nwarps_per_block-1) / nwarps_per_block;
+/*  
+    amrex::launch_global<<<nblocks,nthreads>>>(
+    [=] AMREX_GPU_DEVICE () noexcept
+    {
+        int g_tid = blockDim.x*blockIdx.x + threadIdx.x;
+        int g_wid = g_tid / Gpu::Device::warp_size;
+        if (g_wid >= ntotwarps) return;
+
+        int tag_id;
+        {
+            int lo = 0;
+            int hi = ntags;
+            while (lo <= hi)
+            {
+                int mid = (lo+hi)/2;
+                if (g_wid >= d_nwarps[mid] and g_wid < d_nwarps[mid+1]) {
+                    tag_id = mid;
+                    break;
+                } else if (g_wid < d_nwarps[mid]) {
+                    hi = mid-1;
+                } else {
+                    lo = mid+1;
+                }
+            };
+        }
+
+        auto tag = d_tags[tag_id];
+        int ncells = tag.dbox.numPts();
+        int b_wid = g_wid - d_nwarps[tag_id]; // b_wid'th warp on this box
+        int lane = threadIdx.x % Gpu::Device::warp_size;
+        int icell = b_wid*Gpu::Device::warp_size + lane;
+        if (icell < ncells) {
+            const auto len = amrex::length(tag.dbox);
+            const auto lo  = amrex::lbound(tag.dbox);
+            int k =  icell /   (len.x*len.y);
+            int j = (icell - k*(len.x*len.y)) /   len.x;
+            int i = (icell - k*(len.x*len.y)) - j*len.x;
+            i += lo.x;
+            j += lo.y;
+            k += lo.z;
+            for (int n = 0; n < ncomp; ++n) {
+                f(i,j,k,n,tag.dfab);
+            }
+        }
+    });*/
+
+    Gpu::synchronize();
+    The_Device_Arena()->free(d_nwarps);
+    The_Device_Arena()->free(d_tags);
+}
+
+
 #endif
 
 namespace detail {
