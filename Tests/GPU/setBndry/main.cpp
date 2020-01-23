@@ -16,9 +16,8 @@ int main (int argc, char* argv[])
 {
     amrex::Initialize(argc, argv);
     {
-        amrex::Print() << "Start" << std::endl;
-
-        int n_cell, max_grid_size;
+        IntVect n_cell;
+        IntVect max_grid_size;
         int Ncomp = 1;
         int Nghost = 1;
         {
@@ -32,12 +31,16 @@ int main (int argc, char* argv[])
 
         BoxArray ba;
         { 
-            IntVect dom_lo(AMREX_D_DECL(       0,        0,        0));
-            IntVect dom_hi(AMREX_D_DECL(n_cell-1, n_cell-1, n_cell-1));
+            IntVect dom_lo(AMREX_D_DECL(          0,           0,           0));
+            IntVect dom_hi(AMREX_D_DECL(n_cell[0]-1, n_cell[1]-1, n_cell[2]-1));
             Box domain(dom_lo, dom_hi);
 
             ba.define(domain);
             ba.maxSize(max_grid_size);
+
+            amrex::Print() << " Using domain: " << domain
+                           << " max_grid_size: " << max_grid_size
+                           << " and Nghost: " << Nghost << std::endl;
         }
         DistributionMapping dm(ba);
 

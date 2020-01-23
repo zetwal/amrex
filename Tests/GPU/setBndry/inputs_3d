@@ -1,5 +1,5 @@
-n_cell = 256 
-max_grid_size = 128
-nghost = 1 
+n_cell = (256, 256, 256) 
+max_grid_size = (128, 128, 128) 
+nghost = 4 
 
 #amrex.v = 1
