@@ -60,20 +60,30 @@ int main (int argc, char* argv[])
         control.setVal(-1.0);
 
         {
-            BL_PROFILE_REGION(" **** setval ");
-            control.setVal(0.0);
+            BL_PROFILE_REGION("First run");
+            ori.setBndry(1.0, 0, Ncomp);
+            check.setBndryTestCell(1.0, 0, Ncomp);
+            oriFused.setBndryFusedDiff(1.0, 0, Ncomp);
+            checkFused.setBndryFusedTestCell(1.0, 0, Ncomp);
+
+            // Fused without the launch to time setup overhead.
+            control.setBndryFusedDiffEmpty(1.0, 0, Ncomp);
+            control.setBndryFusedTestCellEmpty(1.0, 0, Ncomp);
         }
 
-        amrex::Print() << "MultiFabs setup." << std::endl;
+        {
+            BL_PROFILE_REGION("Test");
+            control.setVal(0.0);
 
-        ori.setBndry(1.0, 0, Ncomp);
-        check.setBndryTestCell(1.0, 0, Ncomp);
-        oriFused.setBndryFusedDiff(1.0, 0, Ncomp);
-        checkFused.setBndryFusedTestCell(1.0, 0, Ncomp);
+            ori.setBndry(1.0, 0, Ncomp);
+            check.setBndryTestCell(1.0, 0, Ncomp);
+            oriFused.setBndryFusedDiff(1.0, 0, Ncomp);
+            checkFused.setBndryFusedTestCell(1.0, 0, Ncomp);
 
-        // Fused without the launch to time setup overhead.
-        control.setBndryFusedDiffEmpty(1.0, 0, Ncomp);
-        control.setBndryFusedTestCellEmpty(1.0, 0, Ncomp);
+            // Fused without the launch to time setup overhead.
+            control.setBndryFusedDiffEmpty(1.0, 0, Ncomp);
+            control.setBndryFusedTestCellEmpty(1.0, 0, Ncomp);
+        }
 
         // Sum of all cells (Checks that boundary is set).
         for (MFIter mfi(ori); mfi.isValid(); ++mfi)
