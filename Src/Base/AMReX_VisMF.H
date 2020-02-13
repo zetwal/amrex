@@ -195,7 +195,8 @@ public:
     static long Write (const FabArray<FArrayBox> &fafab,
                        const std::string& name,
                        VisMF::How         how = NFiles,
-                       bool               set_ghost = false);
+                       bool               set_ghost = false
+                       bool               compress = false);
 
     static std::future<WriteAsyncStatus>
     WriteAsync (const FabArray<FArrayBox>& fafab, const std::string& name);

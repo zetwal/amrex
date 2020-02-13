@@ -18,6 +18,12 @@
 #include <AMReX_FPC.H>
 #include <AMReX_FabArrayUtility.H>
 
+#ifdef COMPRESSION
+#include "compression/compressorFactory.hpp"
+#include "compression/compressorInterface.hpp"
+#include "compression/timer.hpp"
+#endif
+
 namespace amrex {
 
 static const char *TheMultiFabHdrFileSuffix = "_H";
@@ -916,7 +922,8 @@ long
 VisMF::Write (const FabArray<FArrayBox>&    mf,
               const std::string& mf_name,
               VisMF::How         how,
-              bool               set_ghost)
+              bool               set_ghost
+              bool               compress)
 {
     BL_PROFILE("VisMF::Write(FabArray)");
     BL_ASSERT(mf_name[mf_name.length() - 1] != '/');
@@ -1035,6 +1042,7 @@ VisMF::Write (const FabArray<FArrayBox>&    mf,
               writePosition += hLength + writeDataSize;
             }
             nfi.Stream().write(allFabData, bytesWritten);
+            std::cout << "VisMF::Write, loc A" << std::endl;
             nfi.Stream().flush();
 	    delete [] allFabData;
 
@@ -1043,13 +1051,15 @@ VisMF::Write (const FabArray<FArrayBox>&    mf,
               int hLength(0);
               const FArrayBox &fab = mf[mfi];
 	      writeDataItems = fab.box().numPts() * mf.nComp();
+          std::cout << "mf.nComp(): " << mf.nComp() << ", fab.box().numPts(): " << fab.box().numPts() << std::endl;
 	      writeDataSize = writeDataItems * whichRDBytes;
 	      if(oldHeader) {
 	        std::stringstream hss;
 	        fio.write_header(hss, fab, fab.nComp());
 	        hLength = static_cast<std::streamoff>(hss.tellp());
                 auto tstr = hss.str();
-                nfi.Stream().write(tstr.c_str(), hLength);    // ---- the fab header
+                nfi.Stream().write(tstr.c_str(), hLength);    // ---- the fab header  // being used
+                std::cout << "VisMF::Write, loc B" << std::endl;
                 nfi.Stream().flush();
 	      }
 	      if(doConvert) {
@@ -1058,6 +1068,7 @@ VisMF::Write (const FabArray<FArrayBox>&    mf,
 		                                        writeDataItems,
 		                                        fab.dataPtr(), *whichRD);
                 nfi.Stream().write(cDataPtr, writeDataSize);
+                std::cout << "VisMF::Write, loc C" << std::endl;
                 nfi.Stream().flush();
 	        delete [] cDataPtr;
 	      } else {    // ---- copy from the fab
@@ -2442,6 +2453,7 @@ VisMF::WriteAsync (const FabArray<FArrayBox>& mf, const std::string& mf_name)
                      : (std::ios::binary | std::ios::app));
             if (!ofs.good()) amrex::FileOpenFailed(file_name);
             ofs.write(d.get(), total_bytes);
+            std::cout << "VisMF::WriteAsync, line 2447" << std::endl;
             ofs.close();
         }
 
