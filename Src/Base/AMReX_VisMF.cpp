@@ -886,7 +886,7 @@ VisMF::WriteHeaderDoit (const std::string&mf_name, const VisMF::Header& hdr)
     // Add in the number of bytes written out in the Header.
     //
     long bytesWritten = VisMF::FileOffset(MFHdrFile);
-
+    std::cout << "VisMF::WriteHeaderDoit " << bytesWritten << std::endl;
     MFHdrFile.flush();
     MFHdrFile.close();
 
@@ -903,7 +903,7 @@ VisMF::WriteHeader (const std::string &mf_name, VisMF::Header &hdr,
     if(ParallelDescriptor::MyProc(comm) == procToWrite) {
 
         bytesWritten += WriteHeaderDoit(mf_name, hdr);
-
+	std::cout << "VisMF::WriteHeader " << bytesWritten << std::endl;
 	if(checkFilePositions) {
           std::stringstream hss;
 	  hss << hdr;
@@ -922,7 +922,7 @@ long
 VisMF::Write (const FabArray<FArrayBox>&    mf,
               const std::string& mf_name,
               VisMF::How         how,
-              bool               set_ghost
+              bool               set_ghost,
               bool               compress)
 {
     BL_PROFILE("VisMF::Write(FabArray)");
@@ -1042,7 +1042,7 @@ VisMF::Write (const FabArray<FArrayBox>&    mf,
               writePosition += hLength + writeDataSize;
             }
             nfi.Stream().write(allFabData, bytesWritten);
-            std::cout << "VisMF::Write, loc A" << std::endl;
+            std::cout << "VisMF::Write, loc A " << bytesWritten << std::endl;
             nfi.Stream().flush();
 	    delete [] allFabData;
 
@@ -1059,7 +1059,7 @@ VisMF::Write (const FabArray<FArrayBox>&    mf,
 	        hLength = static_cast<std::streamoff>(hss.tellp());
                 auto tstr = hss.str();
                 nfi.Stream().write(tstr.c_str(), hLength);    // ---- the fab header  // being used
-                std::cout << "VisMF::Write, loc B" << std::endl;
+                std::cout << "VisMF::Write, loc B " << hLength << std::endl;
                 nfi.Stream().flush();
 	      }
 	      if(doConvert) {
@@ -1068,7 +1068,7 @@ VisMF::Write (const FabArray<FArrayBox>&    mf,
 		                                        writeDataItems,
 		                                        fab.dataPtr(), *whichRD);
                 nfi.Stream().write(cDataPtr, writeDataSize);
-                std::cout << "VisMF::Write, loc C" << std::endl;
+                std::cout << "VisMF::Write, loc C " << writeDataSize << std::endl;
                 nfi.Stream().flush();
 	        delete [] cDataPtr;
 	      } else {    // ---- copy from the fab

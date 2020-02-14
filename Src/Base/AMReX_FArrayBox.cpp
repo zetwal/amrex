@@ -140,9 +140,11 @@ FABio::write_header (std::ostream&    os,
                      int              nvar) const
 {
 //    BL_PROFILE("FABio::write_header");
+    std::cout << "FAB_default::write_header" << std::endl;
     BL_ASSERT(nvar <= f.nComp());
     amrex::StreamRetry sr(os, "FABio_write_header", 4);
     while(sr.TryOutput()) {
+      std::cout << f.box() << ' ' << nvar << '\n';
       os << f.box() << ' ' << nvar << '\n';
     }
 }
@@ -477,6 +479,7 @@ FABio::read_header (std::istream& is,
                     FArrayBox&    f)
 {
 //    BL_PROFILE("FArrayBox::read_header_is");
+    std::cout << "FABio::read_header" << std::endl;
     int nvar;
     Box bx;
     FABio* fio = 0;
@@ -554,6 +557,7 @@ FABio::read_header (std::istream& is,
 		    int&          nCompAvailable)
 {
 //    BL_PROFILE("FArrayBox::read_header_is_i");
+    std::cout << "FABio::read_header_is_i " << compIndex << std::endl;
     int nvar;
     Box bx;
     FABio *fio = 0;
@@ -640,6 +644,7 @@ FArrayBox::writeOn (std::ostream& os, int comp, int num_comp) const
 void
 FArrayBox::readFrom (std::istream& is)
 {
+    std::cout << "FArrayBox::readFrom\n";
 //    BL_PROFILE("FArrayBox::readFrom_is");
     FABio* fabrd = FABio::read_header(is, *this);
     fabrd->read(is, *this);
@@ -650,11 +655,13 @@ FArrayBox::readFrom (std::istream& is)
 int
 FArrayBox::readFrom (std::istream& is, int compIndex)
 {
+    std::cout << "FArrayBox::readFrom_is_i "<<compIndex<<"\n";
 //    BL_PROFILE("FArrayBox::readFrom_is_i");
     int nCompAvailable;
     FABio* fabrd = FABio::read_header(is, *this, compIndex, nCompAvailable);
     BL_ASSERT(compIndex >= 0 && compIndex < nCompAvailable);
 
+    
     fabrd->skip(is, *this, compIndex);  // skip data up to the component we want
     fabrd->read(is, *this);
     int remainingComponents = nCompAvailable - compIndex - 1;
@@ -753,6 +760,7 @@ FABio_ascii::write_header (std::ostream&    os,
                            const FArrayBox& f,
                            int              nvar) const
 {
+    std::cout << "FAB_ascii::write_header" << std::cout;
     os << "FAB: "
        << FABio::FAB_ASCII
        << ' '
@@ -877,6 +885,7 @@ FABio_8bit::write_header (std::ostream&    os,
                           const FArrayBox& f,
                           int              nvar) const
 {
+    std::cout << "FAB_8bit::write_header" << std::endl;
     os << "FAB: " << FABio::FAB_8BIT << ' ' << 0 << ' ' << sys_name << '\n';
     FABio::write_header(os, f, nvar);
 }
@@ -893,6 +902,7 @@ FABio_binary::write_header (std::ostream&    os,
                             int              nvar) const
 {
 //    BL_PROFILE("FABio_binary::write_header");
+    std::cout << "FAB_binary::write_header" << std::endl;
     os << "FAB " << *realDesc;
     FABio::write_header(os, f, nvar);
 }
