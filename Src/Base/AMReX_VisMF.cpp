@@ -19,9 +19,10 @@
 #include <AMReX_FabArrayUtility.H>
 
 #ifdef COMPRESSION
-#include "compression/compressorFactory.hpp"
-#include "compression/compressorInterface.hpp"
-#include "compression/timer.hpp"
+//#include "compressorFactory.hpp"
+//#include "compressorInterface.hpp"
+//#include "timer.hpp"
+#include "blosc.h"
 #endif
 
 namespace amrex {
@@ -1051,7 +1052,7 @@ VisMF::Write (const FabArray<FArrayBox>&    mf,
               int hLength(0);
               const FArrayBox &fab = mf[mfi];
 	      writeDataItems = fab.box().numPts() * mf.nComp();
-          std::cout << "mf.nComp(): " << mf.nComp() << ", fab.box().numPts(): " << fab.box().numPts() << std::endl;
+              std::cout << "mf.nComp(): " << mf.nComp() << ", fab.box().numPts(): " << fab.box().numPts() << std::endl;
 	      writeDataSize = writeDataItems * whichRDBytes;
 	      if(oldHeader) {
 	        std::stringstream hss;
@@ -1062,6 +1063,7 @@ VisMF::Write (const FabArray<FArrayBox>&    mf,
                 std::cout << "VisMF::Write, loc B " << hLength << std::endl;
                 nfi.Stream().flush();
 	      }
+              // Actual write of data to stream is done below
 	      if(doConvert) {
 	        char *cDataPtr = new char[writeDataSize];
 	        RealDescriptor::convertFromNativeFormat(static_cast<void *> (cDataPtr),
@@ -1072,7 +1074,33 @@ VisMF::Write (const FabArray<FArrayBox>&    mf,
                 nfi.Stream().flush();
 	        delete [] cDataPtr;
 	      } else {    // ---- copy from the fab
-                nfi.Stream().write((char *) fab.dataPtr(), writeDataSize);
+                std::cout << "VisMF::Write, loc D " << writeDataSize << std::endl;
+                if(compress)
+                {
+                  long isize = writeDataSize;
+                  long osize = isize + BLOSC_MAX_OVERHEAD;
+                  long dataTypeSize = whichRDBytes;
+                  void * output = std::malloc(osize);
+                  osize = blosc_compress(9, 1, dataTypeSize, isize, fab.dataPtr(), output, osize);
+                  if (osize < 0)
+                  {
+                    throw std::runtime_error("Compression error. Error code: " + std::to_string(osize));
+                  }
+                  if (osize > 0)
+                  {
+                    output = std::realloc(output, osize);
+                  }
+                  std::cout << "VisMF::Write, compress " << osize << " cratio: " << (float)writeDataSize/osize << std::endl;
+                  //write out the original size
+                  nfi.Stream().write(reinterpret_cast<char*>(&writeDataSize), 8);
+                  //write out compressed stream
+                  nfi.Stream().write((char *) output, osize);
+		  bytesWritten = 8 + osize;
+                  std::free(output); output = NULL;
+                }
+                else
+                  nfi.Stream().write((char *) fab.dataPtr(), writeDataSize);
+                
                 nfi.Stream().flush();
 	      }
             }
@@ -1093,7 +1121,10 @@ VisMF::Write (const FabArray<FArrayBox>&    mf,
     VisMF::FindOffsets(mf, filePrefix, hdr, currentVersion, nfi,
                        ParallelDescriptor::Communicator());
 
+    std::cout << "VisMF::Write, near-end " << bytesWritten << std::endl;
     bytesWritten += VisMF::WriteHeader(mf_name, hdr, coordinatorProc);
+
+    std::cout << "VisMF::Write, end " << bytesWritten << std::endl << std::endl;
 
     delete whichRD;
 

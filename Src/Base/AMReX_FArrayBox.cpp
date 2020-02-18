@@ -916,6 +916,7 @@ FABio_binary::read (std::istream& is,
     Real* comp_ptr      = f.dataPtr(0);
     const long siz      = base_siz*f.nComp();
     RealDescriptor::convertToNativeFormat(comp_ptr, siz, is, *realDesc);
+    std::cout << "FAB_binary::read " << siz << std::endl;
     if(is.fail()) {
         amrex::Error("FABio_binary::read() failed");
     }
@@ -935,6 +936,7 @@ FABio_binary::write (std::ostream&    os,
     const long siz       = base_siz*num_comp;
 
     RealDescriptor::convertFromNativeFormat(os, siz, comp_ptr, *realDesc);
+    std::cout << "FAB_binary::write " << siz << std::endl;
 
     if(os.fail()) {
         amrex::Error("FABio_binary::write() failed");
