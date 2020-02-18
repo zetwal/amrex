@@ -1,0 +1,26 @@
+COMPRESS_EXEC=EXE
+
+ifeq ($(USE_COMPRESSION),TRUE)
+
+#  # base classes and utils
+  #C$(COMPRESS_EXEC)_headers += compressorFactory.hpp  compressorInterface.hpp  timer.hpp
+  #C$(COMPRESS_EXEC)_sources += AMReX_InSituBridge.cpp AMReX_InSituUtils.cpp
+
+#  # AmrCore adaptor and bridge
+#  C$(COMPRESS_EXEC)_headers += AMReX_AmrMeshDataAdaptor.H \
+#                              AMReX_AmrMeshInSituBridge.H
+
+#  C$(COMPRESS_EXEC)_sources += AMReX_AmrMeshDataAdaptor.cpp \
+#                              AMReX_AmrMeshInSituBridge.cpp
+
+  # Amr adaptor and bridge
+#  C$(COMPRESS_EXEC)_headers += AMReX_AmrDataAdaptor.H \
+#                              AMReX_AmrInSituBridge.H
+
+#  C$(COMPRESS_EXEC)_sources += AMReX_AmrDataAdaptor.cpp \
+#                              AMReX_AmrInSituBridge.cpp
+                              
+endif
+
+VPATH_LOCATIONS += $(AMREX_HOME)/Src/Base/compression
+INCLUDE_LOCATIONS += $(AMREX_HOME)/Src/Base/compression
