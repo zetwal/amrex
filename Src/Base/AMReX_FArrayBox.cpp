@@ -20,6 +20,10 @@
 #include <AMReX_Utility.H>
 #include <AMReX_MemPool.H>
 
+#ifdef COMPRESSION
+#include "blosc.h"
+#endif
+
 namespace amrex {
 
 bool FArrayBox::initialized = false;
@@ -32,6 +36,8 @@ bool FArrayBox::do_initval = false;
 bool FArrayBox::init_snan  = false;
 #endif
 Real FArrayBox::initval;
+
+bool FArrayBox::compressed = false;
 
 static const char sys_name[] = "IEEE";
 //
@@ -144,8 +150,17 @@ FABio::write_header (std::ostream&    os,
     BL_ASSERT(nvar <= f.nComp());
     amrex::StreamRetry sr(os, "FABio_write_header", 4);
     while(sr.TryOutput()) {
-      std::cout << f.box() << ' ' << nvar << '\n';
-      os << f.box() << ' ' << nvar << '\n';
+
+      std::cout << f.box() << ' ' << nvar; // HEADERHERE
+      if(f.get_compress())
+          std::cout << ' ' << 'c';
+      std::cout << '\n';
+
+      os << f.box() << ' ' << nvar;
+      if(f.get_compress()) 
+          os << ' ' << 'c';
+      os << '\n';
+
     }
 }
 
@@ -355,6 +370,18 @@ Real
 FArrayBox::get_initval ()
 {
     return initval;
+}
+
+void 
+FArrayBox::set_compress (bool cmp)
+{
+    compressed = cmp;
+}
+
+bool
+FArrayBox::get_compress()
+{
+     return compressed;
 }
 
 void
@@ -573,6 +600,7 @@ FABio::read_header (std::istream& is,
 
     is >> c;
     if(c == ':') {  // ---- The "old" FAB format.
+        std::cout << "FABio::old_header " << std::endl;
         int typ_in, wrd_in;
         is >> typ_in;
         is >> wrd_in;
@@ -607,6 +635,7 @@ FABio::read_header (std::istream& is,
             amrex::Error("FABio::read_header(): Unrecognized FABio header");
         }
     } else {  // ---- The "new" FAB format.
+        std::cout << "FABio::new_header " << std::endl;
         is.putback(c);
         rd = new RealDescriptor;
         is >> *rd;
@@ -620,7 +649,18 @@ FABio::read_header (std::istream& is,
         if (f.box() != bx || f.nComp() != nvar) {
             f.resize(bx,nvar);
         }
-        is.ignore(BL_IGNORE_MAX, '\n');
+        //
+        // Check for a compression flag
+        //
+        is >> c;
+        if(c == 'c')
+        {
+            is.ignore(BL_IGNORE_MAX, '\n');
+            f.set_compress(true);
+        } else {
+            is.putback(c);
+            is.ignore(BL_IGNORE_MAX, '\n');
+        }
         fio = new FABio_binary(rd);
     }
 
@@ -661,11 +701,40 @@ FArrayBox::readFrom (std::istream& is, int compIndex)
     FABio* fabrd = FABio::read_header(is, *this, compIndex, nCompAvailable);
     BL_ASSERT(compIndex >= 0 && compIndex < nCompAvailable);
 
-    
-    fabrd->skip(is, *this, compIndex);  // skip data up to the component we want
-    fabrd->read(is, *this);
-    int remainingComponents = nCompAvailable - compIndex - 1;
-    fabrd->skip(is, *this, remainingComponents);  // skip to the end
+    // Detect if need to decompress
+#ifdef COMPRESSION
+    if(get_compress())
+    {
+        //long siz = (*this).box().numpts();
+        long osize = 0;//siz * realDesc->numBytes() * (*this).nComp();
+        long rosize = 0;
+        fabrd->skip(is, *this, 0);
+        //is >> rosize;
+        is.read( reinterpret_cast<char*>(&rosize), 8); //Read compression header
+        std::string cdat(std::istreambuf_iterator<char>(is), {}); //Read in entire compressed data
+        std::cout << "FArrayBox::decompress - Read Output: " << rosize << " Comp Output: " << osize << std::endl;
+        void * output = std::malloc(rosize); //Allocate target size
+        size_t sz = blosc_decompress(cdat.c_str(), output, rosize);  
+	std::cout << "FArrayBox::readFrom_decompressing " << sz << std::endl;
+        std::stringstream newis;
+        newis.write((const char*) output, sz);
+   
+        
+	std::istream sis(newis.rdbuf());
+        //is.putback()
+        fabrd->skip(sis, *this, compIndex);  // skip data up to the component we want
+        fabrd->read(sis, *this);
+        int remainingComponents = nCompAvailable - compIndex - 1;
+        fabrd->skip(sis, *this, remainingComponents);  // skip to the end
+    }
+    else
+#endif
+    {
+        fabrd->skip(is, *this, compIndex);  // skip data up to the component we want
+        fabrd->read(is, *this);
+        int remainingComponents = nCompAvailable - compIndex - 1;
+        fabrd->skip(is, *this, remainingComponents);  // skip to the end
+    }
 
     delete fabrd;
     return nCompAvailable;
@@ -965,6 +1034,7 @@ FABio_binary::skip (std::istream& is,
     long base_siz = bx.numPts();
     long siz      = base_siz * nCompToSkip;
     is.seekg(siz*realDesc->numBytes(), std::ios::cur);
+    std::cout << "FAB_binary::skip " << siz*realDesc->numBytes() << std::endl;
     if(is.fail()) {
         amrex::Error("FABio_binary::skip(..., int nCompToSkip) failed");
     }

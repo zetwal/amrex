@@ -402,6 +402,12 @@ public:
     static void Finalize ();
     static bool initialized;
 
+    /**
+    * \brief Helper functions for setting decompression flags on read
+    * and write
+    */
+    static void set_compress (bool cmp);
+    static bool get_compress ();
 protected:
 
     FabType m_type = FabType::regular;
@@ -420,6 +426,9 @@ protected:
     static bool do_initval;
     static Real initval;
     static bool init_snan;
+
+    //! Main decompression flag to drive binary conversion
+    static bool compressed;
 };
 
 using FArrayBoxFactory = DefaultFabFactory<FArrayBox>;
