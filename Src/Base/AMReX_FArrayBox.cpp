@@ -481,6 +481,7 @@ FArrayBox::Initialize ()
     pp.query("do_initval", do_initval);
     pp.query("init_snan", init_snan);
 
+    //pp.query("compression", compression);
     amrex::ExecOnFinalize(FArrayBox::Finalize);
 }
 
@@ -653,13 +654,16 @@ FABio::read_header (std::istream& is,
         // Check for a compression flag
         //
         is >> c;
+        //c = is.peek();
         if(c == 'c')
         {
+            std::cout << " Compression detected\n";
             is.ignore(BL_IGNORE_MAX, '\n');
             f.set_compress(true);
         } else {
+            std::cout << " No compression detected\n";
             is.putback(c);
-            is.ignore(BL_IGNORE_MAX, '\n');
+            //is.ignore(BL_IGNORE_MAX, '\n'); //this is already removed
         }
         fio = new FABio_binary(rd);
     }
