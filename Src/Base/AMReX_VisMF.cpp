@@ -999,6 +999,7 @@ VisMF::Write (const FabArray<FArrayBox>&    mf,
           long writeDataItems(0), writeDataSize(0);
           for(MFIter mfi(mf); mfi.isValid(); ++mfi) {
 	    const FArrayBox &fab = mf[mfi];
+            fab.set_compress(compress); 
 	    if(oldHeader) {
               std::cout << "VisMF::Write_header, loc A " << std::endl;
 	      std::stringstream hss;
@@ -1055,8 +1056,9 @@ VisMF::Write (const FabArray<FArrayBox>&    mf,
               const FArrayBox &fab = mf[mfi];
 	      writeDataItems = fab.box().numPts() * mf.nComp();
               std::cout << "mf.nComp(): " << mf.nComp() << ", fab.box().numPts(): " << fab.box().numPts() << std::endl;
-              if(compress) // set compression flag for fab to append header during write
-                fab.set_compress(true);
+
+              fab.set_compress(compress);
+
 	      writeDataSize = writeDataItems * whichRDBytes;
 	      if(oldHeader) {
                 std::cout << "VisMF::Write_header, loc C " << std::endl;
