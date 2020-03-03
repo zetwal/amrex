@@ -833,7 +833,7 @@ FABio_ascii::write_header (std::ostream&    os,
                            const FArrayBox& f,
                            int              nvar) const
 {
-    std::cout << "FAB_ascii::write_header" << std::cout;
+    std::cout << "FAB_ascii::write_header" << std::endl;
     os << "FAB: "
        << FABio::FAB_ASCII
        << ' '
