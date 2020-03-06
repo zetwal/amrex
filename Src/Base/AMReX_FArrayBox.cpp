@@ -21,6 +21,7 @@
 #include <AMReX_MemPool.H>
 
 #ifdef COMPRESSION
+#include "CRC64.h"
 #include "blosc.h"
 #endif
 
@@ -591,7 +592,8 @@ FABio::read_header (std::istream& is,
     FABio *fio = 0;
     RealDescriptor *rd = 0;
     char c;
-
+    
+    std::cout << "stream peak: " << (char)is.peek() << " and " << is.tellg() << std::endl;
     is >> c;
     if(c != 'F') amrex::Error("FABio::read_header(): expected \'F\'");
     is >> c;
@@ -709,27 +711,65 @@ FArrayBox::readFrom (std::istream& is, int compIndex)
 #ifdef COMPRESSION
     if(get_compress())
     {
-        //long siz = (*this).box().numpts();
-        long osize = 0;//siz * realDesc->numBytes() * (*this).nComp();
-        long rosize = 0;
-        fabrd->skip(is, *this, 0);
-        //is >> rosize;
-        is.read( reinterpret_cast<char*>(&rosize), 8); //Read compression header
-        std::string cdat(std::istreambuf_iterator<char>(is), {}); //Read in entire compressed data
-        std::cout << "FArrayBox::decompress - Read Output: " << rosize << " Comp Output: " << osize << std::endl;
-        void * output = std::malloc(rosize); //Allocate target size
-        size_t sz = blosc_decompress(cdat.c_str(), output, rosize);  
-	std::cout << "FArrayBox::readFrom_decompressing " << sz << std::endl;
+        int targetIndex=compIndex;
+        size_t targetBytes(0), blocksize(0);
+        targetBytes=is.tellg();
+        // Compute starting address location by jumping blocks
+        while(targetIndex)
+	{
+           is.seekg(targetBytes, std::ios::beg);
+           std::cout << " is.loc() " << is.tellg() << std::endl;
+	   is.read( reinterpret_cast<char*>(&blocksize), 8);
+           std::cout << " At compIndex: " << nCompAvailable-targetIndex-1 << " " << targetBytes << " blocksize: " << blocksize << std::endl;
+           targetBytes+=blocksize;
+           --targetIndex;
+	}
+    
+        std::cout << "FArrayBox::read - location: " << targetBytes << std::endl;
+        //long siz = (*this).box().numPts();
+        std::cout << " Siz: " << (*this).box().numPts() << std::endl;
+        std::cout << " nComp: " << (*this).nComp() << " vs " << nCompAvailable << std::endl;
+        //std::cout << " numBytes: " << realDesc->numBytes() << std::endl;
+
+        size_t osize = (*this).box().numPts() * 8; // Calculate output sizee
+        size_t bsize = 0;
+
+        //fabrd->skip(is, *this, 0);
+        is.seekg(targetBytes, std::ios::beg); // Jump to the location of the header
+
+        is.read( reinterpret_cast<char*>(&bsize), 8); //Read compression header
+        uint64_t CRC = 0;
+        is.read( reinterpret_cast<char*>(&CRC), 8); // Read in CRC
+        std::cout << "FArrayBox::readCHeader " << bsize << " CRC " << CRC << std::endl;
+
+        bsize-=16; // Subtract header (8) and CRC (8)
+
+        std::string cdat( bsize, '\0');
+        //std::string cdat(std::istreambuf_iterator<char>(is), {}); //Read in entire compressed data
+        is.read( &cdat[0], bsize );
+        
+        uint64_t CRCok = crc64_omp(&cdat[0], bsize);
+        if(CRC==CRCok)
+           std::cout << "FArrayBox::CRC - PASSED" << std::endl;
+        else
+           amrex::Error("FArrayBox::readFrom::CRC() failed");
+
+        std::cout << "FArrayBox::decompress - ReadSize: " << bsize << " TargetSize: " << osize << std::endl;
+        void * output = std::malloc(osize); //Allocate target size
+        size_t sz = blosc_decompress(cdat.c_str(), output, osize);  
+	std::cout << "FArrayBox::readFrom_decompresed_to " << sz << std::endl;
         std::stringstream newis;
+
         newis.write((const char*) output, sz);
-   
+        free(output); 
         
 	std::istream sis(newis.rdbuf());
         //is.putback()
-        fabrd->skip(sis, *this, compIndex);  // skip data up to the component we want
+        //fabrd->skip(sis, *this, compIndex);  // skip data up to the component we want
         fabrd->read(sis, *this);
         int remainingComponents = nCompAvailable - compIndex - 1;
-        fabrd->skip(sis, *this, remainingComponents);  // skip to the end
+        //fabrd->skip(is, *this, remainingComponents);  // skip to the end
+
     }
     else
 #endif

@@ -22,6 +22,7 @@
 //#include "compressorFactory.hpp"
 //#include "compressorInterface.hpp"
 //#include "timer.hpp"
+#include "CRC64.h"
 #include "blosc.h"
 #endif
 
@@ -1001,7 +1002,7 @@ VisMF::Write (const FabArray<FArrayBox>&    mf,
 	    const FArrayBox &fab = mf[mfi];
             fab.set_compress(compress); 
 	    if(oldHeader) {
-              std::cout << "VisMF::Write_header, loc A " << std::endl;
+              std::cout << "VisMF::Write_header, loc Pre " << std::endl;
 	      std::stringstream hss;
 	      fio.write_header(hss, fab, fab.nComp());
 	      bytesWritten += static_cast<std::streamoff>(hss.tellp());
@@ -1009,6 +1010,7 @@ VisMF::Write (const FabArray<FArrayBox>&    mf,
 	    bytesWritten += fab.box().numPts() * mf.nComp() * whichRDBytes;
 	    ++nFABs;
 	  }
+          std::cout << "VisMF::nFABs " << nFABs << std::endl;
 	  char *allFabData(nullptr);
 	  bool canCombineFABs(false);
 	  if((nFABs > 1 || doConvert) && VisMF::useSingleWrite) {
@@ -1029,7 +1031,7 @@ VisMF::Write (const FabArray<FArrayBox>&    mf,
 	      writeDataSize = writeDataItems * whichRDBytes;
 	      char *afPtr = allFabData + writePosition;
 	      if(oldHeader) {
-                std::cout << "VisMF::Write_header, loc B " << std::endl;
+                std::cout << "VisMF::Write_header, loc A " << std::endl;
 	        std::stringstream hss;
 	        fio.write_header(hss, fab, fab.nComp());
 	        hLength = static_cast<std::streamoff>(hss.tellp());
@@ -1051,6 +1053,7 @@ VisMF::Write (const FabArray<FArrayBox>&    mf,
 	    delete [] allFabData;
 
 	  } else {    // ---- write fabs individually
+            bytesWritten=0; // Actually track what is written in this control block
             for(MFIter mfi(mf); mfi.isValid(); ++mfi) {
               int hLength(0);
               const FArrayBox &fab = mf[mfi];
@@ -1061,7 +1064,7 @@ VisMF::Write (const FabArray<FArrayBox>&    mf,
 
 	      writeDataSize = writeDataItems * whichRDBytes;
 	      if(oldHeader) {
-                std::cout << "VisMF::Write_header, loc C " << std::endl;
+                std::cout << "VisMF::Write_header, loc B " << std::endl;
 	        std::stringstream hss; 
 	        fio.write_header(hss, fab, fab.nComp());
 	        hLength = static_cast<std::streamoff>(hss.tellp());
@@ -1069,14 +1072,16 @@ VisMF::Write (const FabArray<FArrayBox>&    mf,
                 nfi.Stream().write(tstr.c_str(), hLength);    // ---- the fab header  // being used
                 std::cout << "VisMF::Write, loc B " << hLength << std::endl;
                 nfi.Stream().flush();
+                bytesWritten+=hLength;
 	      }
-              // Actual write of data to stream is done below
+              // Actual write op of data to stream is done below
 	      if(doConvert) {
 	        char *cDataPtr = new char[writeDataSize];
 	        RealDescriptor::convertFromNativeFormat(static_cast<void *> (cDataPtr),
 		                                        writeDataItems,
 		                                        fab.dataPtr(), *whichRD);
                 nfi.Stream().write(cDataPtr, writeDataSize);
+                bytesWritten+=writeDataSize;
                 std::cout << "VisMF::Write, loc C " << writeDataSize << std::endl;
                 nfi.Stream().flush();
 	        delete [] cDataPtr;
@@ -1085,30 +1090,54 @@ VisMF::Write (const FabArray<FArrayBox>&    mf,
 #ifdef COMPRESSION
                 if(compress)
                 {
-                  long isize = writeDataSize;
-                  long osize = isize + BLOSC_MAX_OVERHEAD;
-                  long dataTypeSize = whichRDBytes;
-                  void * output = std::malloc(osize);
-                  osize = blosc_compress(9, 1, dataTypeSize, isize, fab.dataPtr(), output, osize);
-                  if (osize < 0)
-                  {
-                    throw std::runtime_error("Compression error. Error code: " + std::to_string(osize));
-                  }
-                  if (osize > 0)
-                  {
-                    output = std::realloc(output, osize);
-                  }
-                  std::cout << "VisMF::Write, compress " << osize << " cratio: " << (float)writeDataSize/osize << std::endl;
-                  //write out the original size
-                  nfi.Stream().write(reinterpret_cast<char*>(&writeDataSize), 8);
-                  //write out compressed stream
-                  nfi.Stream().write((char *) output, osize);
-		  bytesWritten = 8 + osize;
-                  std::free(output); output = NULL;
-                }
-                else
+
+                   // ---- find the total number of bytes per data component
+                   // ---- Compress each component separately
+                   size_t bytesToCompress(0);
+                   int whichRDBytes(whichRD->numBytes()), nFABs(0);
+                   //long writeDataItems(0), writeDataSize(0);
+
+                   for(size_t icomp=0; icomp<mf.nComp(); ++icomp)
+                   {
+                     bytesToCompress = fab.box().numPts() * whichRDBytes;// * mf.nComp();
+
+                     size_t bytesToWrite = bytesToCompress + BLOSC_MAX_OVERHEAD;
+                     long dataTypeSize = whichRDBytes;
+                     void * output = std::malloc(bytesToWrite);
+                     bytesToWrite = blosc_compress(9, 1, dataTypeSize, bytesToCompress, fab.dataPtr(icomp), output, bytesToWrite);
+                     if (bytesToWrite < 0)
+                     {
+                       throw std::runtime_error("Compression error. Error code: " + std::to_string(bytesToWrite));
+                     }
+                     if (bytesToWrite > 0)
+                     {
+                       output = std::realloc(output, bytesToWrite);
+                     }
+                     std::cout << "VisMF::Write, cbytes: " << bytesToWrite << " cratio: " << (float)bytesToCompress/bytesToWrite << std::endl;
+
+                     //write out the header+crc64+original size
+                     size_t bytesPlusHeader = bytesToWrite+8+8;
+
+                     nfi.Stream().write(reinterpret_cast<char*>(&bytesPlusHeader), 8);
+
+                     // Compute CRC64 and write it out
+                     uint64_t CRC = crc64_omp(output, bytesToWrite);
+                     nfi.Stream().write(reinterpret_cast<char*>(&CRC), 8); 
+
+                     //write out compressed stream
+                     nfi.Stream().write((char *) output, bytesToWrite);
+
+                     bytesWritten += bytesPlusHeader;
+                     std::free(output); output = NULL;
+                     ++nFABs;
+                   }
+                   
+                } else
 #endif
-                  nfi.Stream().write((char *) fab.dataPtr(), writeDataSize);
+                { 
+                   nfi.Stream().write((char *) fab.dataPtr(), writeDataSize);
+                   bytesWritten+=writeDataSize;
+                }
                 
                 nfi.Stream().flush();
 	      }
