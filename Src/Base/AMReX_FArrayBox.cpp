@@ -147,15 +147,15 @@ FABio::write_header (std::ostream&    os,
                      int              nvar) const
 {
 //    BL_PROFILE("FABio::write_header");
-    std::cout << "FAB_default::write_header" << std::endl;
+    //std::cout << "FAB_default::write_header" << std::endl;
     BL_ASSERT(nvar <= f.nComp());
     amrex::StreamRetry sr(os, "FABio_write_header", 4);
     while(sr.TryOutput()) {
 
-      std::cout << f.box() << ' ' << nvar; // HEADERHERE
+      //std::cout << f.box() << ' ' << nvar; // HEADERHERE
       if(f.get_compress())
-          std::cout << ' ' << 'c';
-      std::cout << '\n';
+          //std::cout << ' ' << 'c';
+      //std::cout << '\n';
 
       os << f.box() << ' ' << nvar;
       if(f.get_compress()) 
@@ -508,7 +508,7 @@ FABio::read_header (std::istream& is,
                     FArrayBox&    f)
 {
 //    BL_PROFILE("FArrayBox::read_header_is");
-    std::cout << "FABio::read_header" << std::endl;
+    //std::cout << "FABio::read_header" << std::endl;
     int nvar;
     Box bx;
     FABio* fio = 0;
@@ -586,14 +586,14 @@ FABio::read_header (std::istream& is,
 		    int&          nCompAvailable)
 {
 //    BL_PROFILE("FArrayBox::read_header_is_i");
-    std::cout << "FABio::read_header_is_i " << compIndex << std::endl;
+    //std::cout << "FABio::read_header_is_i " << compIndex << std::endl;
     int nvar;
     Box bx;
     FABio *fio = 0;
     RealDescriptor *rd = 0;
     char c;
     
-    std::cout << "stream peak: " << (char)is.peek() << " and " << is.tellg() << std::endl;
+    //std::cout << "stream peak: " << (char)is.peek() << " and " << is.tellg() << std::endl;
     is >> c;
     if(c != 'F') amrex::Error("FABio::read_header(): expected \'F\'");
     is >> c;
@@ -603,7 +603,7 @@ FABio::read_header (std::istream& is,
 
     is >> c;
     if(c == ':') {  // ---- The "old" FAB format.
-        std::cout << "FABio::old_header " << std::endl;
+        //std::cout << "FABio::old_header " << std::endl;
         int typ_in, wrd_in;
         is >> typ_in;
         is >> wrd_in;
@@ -638,7 +638,7 @@ FABio::read_header (std::istream& is,
             amrex::Error("FABio::read_header(): Unrecognized FABio header");
         }
     } else {  // ---- The "new" FAB format.
-        std::cout << "FABio::new_header " << std::endl;
+        //std::cout << "FABio::new_header " << std::endl;
         is.putback(c);
         rd = new RealDescriptor;
         is >> *rd;
@@ -659,11 +659,11 @@ FABio::read_header (std::istream& is,
         //c = is.peek();
         if(c == 'c')
         {
-            std::cout << " Compression detected\n";
+            //std::cout << " Compression detected\n";
             is.ignore(BL_IGNORE_MAX, '\n');
             f.set_compress(true);
         } else {
-            std::cout << " No compression detected\n";
+            //std::cout << " No compression detected\n";
             is.putback(c);
             //is.ignore(BL_IGNORE_MAX, '\n'); //this is already removed
         }
@@ -690,7 +690,7 @@ FArrayBox::writeOn (std::ostream& os, int comp, int num_comp) const
 void
 FArrayBox::readFrom (std::istream& is)
 {
-    std::cout << "FArrayBox::readFrom\n";
+    //std::cout << "FArrayBox::readFrom\n";
 //    BL_PROFILE("FArrayBox::readFrom_is");
     FABio* fabrd = FABio::read_header(is, *this);
     fabrd->read(is, *this);
@@ -701,7 +701,7 @@ FArrayBox::readFrom (std::istream& is)
 int
 FArrayBox::readFrom (std::istream& is, int compIndex)
 {
-    std::cout << "FArrayBox::readFrom_is_i "<<compIndex<<"\n";
+    //std::cout << "FArrayBox::readFrom_is_i "<<compIndex<<"\n";
 //    BL_PROFILE("FArrayBox::readFrom_is_i");
     int nCompAvailable;
     FABio* fabrd = FABio::read_header(is, *this, compIndex, nCompAvailable);
@@ -718,18 +718,18 @@ FArrayBox::readFrom (std::istream& is, int compIndex)
         while(targetIndex)
 	{
            is.seekg(targetBytes, std::ios::beg);
-           std::cout << " is.loc() " << is.tellg() << std::endl;
+           //std::cout << " is.loc() " << is.tellg() << std::endl;
 	   is.read( reinterpret_cast<char*>(&blocksize), 8);
-           std::cout << " At compIndex: " << nCompAvailable-targetIndex-1 << " " << targetBytes << " blocksize: " << blocksize << std::endl;
+           //std::cout << " At compIndex: " << nCompAvailable-targetIndex-1 << " " << targetBytes << " blocksize: " << blocksize << std::endl;
            targetBytes+=blocksize;
            --targetIndex;
 	}
     
-        std::cout << "FArrayBox::read - location: " << targetBytes << std::endl;
+        //std::cout << "FArrayBox::read - location: " << targetBytes << std::endl;
         //long siz = (*this).box().numPts();
-        std::cout << " Siz: " << (*this).box().numPts() << std::endl;
-        std::cout << " nComp: " << (*this).nComp() << " vs " << nCompAvailable << std::endl;
-        //std::cout << " numBytes: " << realDesc->numBytes() << std::endl;
+        //std::cout << " Siz: " << (*this).box().numPts() << std::endl;
+        //std::cout << " nComp: " << (*this).nComp() << " vs " << nCompAvailable << std::endl;
+        ////std::cout << " numBytes: " << realDesc->numBytes() << std::endl;
 
         size_t osize = (*this).box().numPts() * 8; // Calculate output sizee
         size_t bsize = 0;
@@ -740,7 +740,7 @@ FArrayBox::readFrom (std::istream& is, int compIndex)
         is.read( reinterpret_cast<char*>(&bsize), 8); //Read compression header
         uint64_t CRC = 0;
         is.read( reinterpret_cast<char*>(&CRC), 8); // Read in CRC
-        std::cout << "FArrayBox::readCHeader " << bsize << " CRC " << CRC << std::endl;
+        //std::cout << "FArrayBox::readCHeader " << bsize << " CRC " << CRC << std::endl;
 
         bsize-=16; // Subtract header (8) and CRC (8)
 
@@ -754,10 +754,10 @@ FArrayBox::readFrom (std::istream& is, int compIndex)
         else
            amrex::Error("FArrayBox::readFrom::CRC() failed");
 
-        std::cout << "FArrayBox::decompress - ReadSize: " << bsize << " TargetSize: " << osize << std::endl;
+        //std::cout << "FArrayBox::decompress - ReadSize: " << bsize << " TargetSize: " << osize << std::endl;
         void * output = std::malloc(osize); //Allocate target size
         size_t sz = blosc_decompress(cdat.c_str(), output, osize);  
-	std::cout << "FArrayBox::readFrom_decompresed_to " << sz << std::endl;
+	//std::cout << "FArrayBox::readFrom_decompresed_to " << sz << std::endl;
         std::stringstream newis;
 
         newis.write((const char*) output, sz);
@@ -767,7 +767,7 @@ FArrayBox::readFrom (std::istream& is, int compIndex)
         //is.putback()
         //fabrd->skip(sis, *this, compIndex);  // skip data up to the component we want
         fabrd->read(sis, *this);
-        int remainingComponents = nCompAvailable - compIndex - 1;
+        //int remainingComponents = nCompAvailable - compIndex - 1;
         //fabrd->skip(is, *this, remainingComponents);  // skip to the end
 
     }
@@ -873,7 +873,7 @@ FABio_ascii::write_header (std::ostream&    os,
                            const FArrayBox& f,
                            int              nvar) const
 {
-    std::cout << "FAB_ascii::write_header" << std::endl;
+    //std::cout << "FAB_ascii::write_header" << std::endl;
     os << "FAB: "
        << FABio::FAB_ASCII
        << ' '
@@ -998,7 +998,7 @@ FABio_8bit::write_header (std::ostream&    os,
                           const FArrayBox& f,
                           int              nvar) const
 {
-    std::cout << "FAB_8bit::write_header" << std::endl;
+    //std::cout << "FAB_8bit::write_header" << std::endl;
     os << "FAB: " << FABio::FAB_8BIT << ' ' << 0 << ' ' << sys_name << '\n';
     FABio::write_header(os, f, nvar);
 }
@@ -1015,7 +1015,7 @@ FABio_binary::write_header (std::ostream&    os,
                             int              nvar) const
 {
 //    BL_PROFILE("FABio_binary::write_header");
-    std::cout << "FAB_binary::write_header" << std::endl;
+    //std::cout << "FAB_binary::write_header" << std::endl;
     os << "FAB " << *realDesc;
     FABio::write_header(os, f, nvar);
 }
@@ -1029,7 +1029,7 @@ FABio_binary::read (std::istream& is,
     Real* comp_ptr      = f.dataPtr(0);
     const long siz      = base_siz*f.nComp();
     RealDescriptor::convertToNativeFormat(comp_ptr, siz, is, *realDesc);
-    std::cout << "FAB_binary::read " << siz << std::endl;
+    //std::cout << "FAB_binary::read " << siz << std::endl;
     if(is.fail()) {
         amrex::Error("FABio_binary::read() failed");
     }
@@ -1049,7 +1049,7 @@ FABio_binary::write (std::ostream&    os,
     const long siz       = base_siz*num_comp;
 
     RealDescriptor::convertFromNativeFormat(os, siz, comp_ptr, *realDesc);
-    std::cout << "FAB_binary::write " << siz << std::endl;
+    //std::cout << "FAB_binary::write " << siz << std::endl;
 
     if(os.fail()) {
         amrex::Error("FABio_binary::write() failed");
@@ -1078,7 +1078,7 @@ FABio_binary::skip (std::istream& is,
     long base_siz = bx.numPts();
     long siz      = base_siz * nCompToSkip;
     is.seekg(siz*realDesc->numBytes(), std::ios::cur);
-    std::cout << "FAB_binary::skip " << siz*realDesc->numBytes() << std::endl;
+    //std::cout << "FAB_binary::skip " << siz*realDesc->numBytes() << std::endl;
     if(is.fail()) {
         amrex::Error("FABio_binary::skip(..., int nCompToSkip) failed");
     }

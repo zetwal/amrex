@@ -99,6 +99,7 @@ public:
 	void CalculateMinMax(const FabArray<FArrayBox>& fafab,
 			     int procToWrite = ParallelDescriptor::IOProcessorNumber(),
                              MPI_Comm = ParallelDescriptor::Communicator());
+
         //
         // The data.
         //
@@ -107,7 +108,8 @@ public:
         int                  m_ncomp; //!< Number of components in MF.
         IntVect              m_ngrow; //!< The number of ghost cells in MF.
         BoxArray             m_ba;    //!< The BoxArray of the MF.
-        Vector< FabOnDisk >   m_fod;   //!< FabOnDisk info for contained FABs.
+        Vector< FabOnDisk >  m_fod;   //!< FabOnDisk info for contained FABs.
+
 	//
 	// These are not defined if they are not in the header
 	//
@@ -115,7 +117,8 @@ public:
         Vector< Vector<Real> > m_max;   //!< The max()s of each component of FABs.  [findex][comp]
         Vector<Real>          m_famin; //!< The min()s of each component of the FabArray.  [comp]
         Vector<Real>          m_famax; //!< The max()s of each component of the FabArray.  [comp]
-	RealDescriptor       m_writtenRD;
+	RealDescriptor        m_writtenRD;
+        Vector< std::size_t > m_csz;   //!< Compressed sized is stored if used
     };
 
     //! This structure is used to store the read order for each FabArray file

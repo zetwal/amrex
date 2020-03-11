@@ -408,6 +408,7 @@ public:
     */
     static void set_compress (bool cmp);
     static bool get_compress ();
+
 protected:
 
     FabType m_type = FabType::regular;

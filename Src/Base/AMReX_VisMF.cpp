@@ -637,7 +637,7 @@ VisMF::Write (const FArrayBox&   fab,
     // Add in the number of bytes in the FAB including the FAB header.
     //
     bytes += (VisMF::FileOffset(os) - fab_on_disk.m_head);
-
+    //std::cout << "VisMF::FabOnDisk::Write " <<bytes << std::endl;
     return fab_on_disk;
 }
 
@@ -888,7 +888,7 @@ VisMF::WriteHeaderDoit (const std::string&mf_name, const VisMF::Header& hdr)
     // Add in the number of bytes written out in the Header.
     //
     long bytesWritten = VisMF::FileOffset(MFHdrFile);
-    std::cout << "VisMF::WriteHeaderDoit " << bytesWritten << std::endl;
+    //std::cout << "VisMF::WriteHeaderDoit " << bytesWritten << std::endl;
     MFHdrFile.flush();
     MFHdrFile.close();
 
@@ -905,7 +905,7 @@ VisMF::WriteHeader (const std::string &mf_name, VisMF::Header &hdr,
     if(ParallelDescriptor::MyProc(comm) == procToWrite) {
 
         bytesWritten += WriteHeaderDoit(mf_name, hdr);
-	std::cout << "VisMF::WriteHeader " << bytesWritten << std::endl;
+	//std::cout << "VisMF::WriteHeader " << bytesWritten << std::endl;
 	if(checkFilePositions) {
           std::stringstream hss;
 	  hss << hdr;
@@ -1002,7 +1002,7 @@ VisMF::Write (const FabArray<FArrayBox>&    mf,
 	    const FArrayBox &fab = mf[mfi];
             fab.set_compress(compress); 
 	    if(oldHeader) {
-              std::cout << "VisMF::Write_header, loc Pre " << std::endl;
+              //std::cout << "VisMF::Write_header, loc Pre " << std::endl;
 	      std::stringstream hss;
 	      fio.write_header(hss, fab, fab.nComp());
 	      bytesWritten += static_cast<std::streamoff>(hss.tellp());
@@ -1010,7 +1010,7 @@ VisMF::Write (const FabArray<FArrayBox>&    mf,
 	    bytesWritten += fab.box().numPts() * mf.nComp() * whichRDBytes;
 	    ++nFABs;
 	  }
-          std::cout << "VisMF::nFABs " << nFABs << std::endl;
+          //std::cout << "VisMF::nFABs " << nFABs << std::endl;
 	  char *allFabData(nullptr);
 	  bool canCombineFABs(false);
 	  if((nFABs > 1 || doConvert) && VisMF::useSingleWrite) {
@@ -1031,7 +1031,7 @@ VisMF::Write (const FabArray<FArrayBox>&    mf,
 	      writeDataSize = writeDataItems * whichRDBytes;
 	      char *afPtr = allFabData + writePosition;
 	      if(oldHeader) {
-                std::cout << "VisMF::Write_header, loc A " << std::endl;
+                //std::cout << "VisMF::Write_header, loc A " << std::endl;
 	        std::stringstream hss;
 	        fio.write_header(hss, fab, fab.nComp());
 	        hLength = static_cast<std::streamoff>(hss.tellp());
@@ -1048,7 +1048,7 @@ VisMF::Write (const FabArray<FArrayBox>&    mf,
               writePosition += hLength + writeDataSize;
             }
             nfi.Stream().write(allFabData, bytesWritten);
-            std::cout << "VisMF::Write, loc A " << bytesWritten << std::endl;
+            //std::cout << "VisMF::Write, loc A " << bytesWritten << std::endl;
             nfi.Stream().flush();
 	    delete [] allFabData;
 
@@ -1058,19 +1058,19 @@ VisMF::Write (const FabArray<FArrayBox>&    mf,
               int hLength(0);
               const FArrayBox &fab = mf[mfi];
 	      writeDataItems = fab.box().numPts() * mf.nComp();
-              std::cout << "mf.nComp(): " << mf.nComp() << ", fab.box().numPts(): " << fab.box().numPts() << std::endl;
+              //std::cout << "mf.nComp(): " << mf.nComp() << ", fab.box().numPts(): " << fab.box().numPts() << std::endl;
 
               fab.set_compress(compress);
 
 	      writeDataSize = writeDataItems * whichRDBytes;
 	      if(oldHeader) {
-                std::cout << "VisMF::Write_header, loc B " << std::endl;
+                //std::cout << "VisMF::Write_header, loc B " << std::endl;
 	        std::stringstream hss; 
 	        fio.write_header(hss, fab, fab.nComp());
 	        hLength = static_cast<std::streamoff>(hss.tellp());
                 auto tstr = hss.str();
                 nfi.Stream().write(tstr.c_str(), hLength);    // ---- the fab header  // being used
-                std::cout << "VisMF::Write, loc B " << hLength << std::endl;
+                //std::cout << "VisMF::Write, loc B " << hLength << std::endl;
                 nfi.Stream().flush();
                 bytesWritten+=hLength;
 	      }
@@ -1082,18 +1082,18 @@ VisMF::Write (const FabArray<FArrayBox>&    mf,
 		                                        fab.dataPtr(), *whichRD);
                 nfi.Stream().write(cDataPtr, writeDataSize);
                 bytesWritten+=writeDataSize;
-                std::cout << "VisMF::Write, loc C " << writeDataSize << std::endl;
+                //std::cout << "VisMF::Write, loc C " << writeDataSize << std::endl;
                 nfi.Stream().flush();
 	        delete [] cDataPtr;
 	      } else {    // ---- copy from the fab
-                std::cout << "VisMF::Write, loc D " << writeDataSize << std::endl;
+                //std::cout << "VisMF::Write, loc D " << writeDataSize << std::endl;
 #ifdef COMPRESSION
                 if(compress)
                 {
 
                    // ---- find the total number of bytes per data component
                    // ---- Compress each component separately
-                   size_t bytesToCompress(0);
+                   size_t bytesToCompress(0), fabcbytes(0);
                    int whichRDBytes(whichRD->numBytes()), nFABs(0);
                    //long writeDataItems(0), writeDataSize(0);
 
@@ -1113,7 +1113,7 @@ VisMF::Write (const FabArray<FArrayBox>&    mf,
                      {
                        output = std::realloc(output, bytesToWrite);
                      }
-                     std::cout << "VisMF::Write, cbytes: " << bytesToWrite << " cratio: " << (float)bytesToCompress/bytesToWrite << std::endl;
+                     //std::cout << "VisMF::Write, cbytes: " << bytesToWrite << " cratio: " << (float)bytesToCompress/bytesToWrite << std::endl;
 
                      //write out the header+crc64+original size
                      size_t bytesPlusHeader = bytesToWrite+8+8;
@@ -1128,10 +1128,22 @@ VisMF::Write (const FabArray<FArrayBox>&    mf,
                      nfi.Stream().write((char *) output, bytesToWrite);
 
                      bytesWritten += bytesPlusHeader;
+                     fabcbytes+= bytesPlusHeader;
                      std::free(output); output = NULL;
                      ++nFABs;
                    }
-                   
+
+                   //m_hdr.csz.push_back(fabcbytes);
+                   ////std::cout << "m_hdr size: " << m_hdr2.m_ncomp << std::endl;
+                   hdr.m_csz.push_back(fabcbytes);
+
+                   //addcsize(fabcbytes);
+
+                   //fab.setCsize(fabcbytes);
+
+                   //fab.csize.push_back(fabcbytes);
+                   //mf[mfi].csize=fabcbytes;
+                   //std::cout << "VisMF::Write, csize: " << fabcbytes << " cratio: " << (float)(fab.box().numPts()*whichRDBytes*mf.nComp())/fabcbytes << std::endl;
                 } else
 #endif
                 { 
@@ -1159,10 +1171,10 @@ VisMF::Write (const FabArray<FArrayBox>&    mf,
     VisMF::FindOffsets(mf, filePrefix, hdr, currentVersion, nfi,
                        ParallelDescriptor::Communicator());
 
-    std::cout << "VisMF::WriteHeader, near-end " << bytesWritten << std::endl;
+    //std::cout << "VisMF::WriteHeader, near-end " << bytesWritten << std::endl;
     bytesWritten += VisMF::WriteHeader(mf_name, hdr, coordinatorProc);
 
-    std::cout << "VisMF::Write, end " << bytesWritten << std::endl << std::endl;
+    //std::cout << "VisMF::Write, end " << bytesWritten << std::endl << std::endl;
 
     delete whichRD;
 
@@ -1281,7 +1293,7 @@ VisMF::FindOffsets (const FabArray<FArrayBox> &mf,
             const std::string name(NFilesIter::FileName(nOutFiles, filePrefix, i, groupSets));
 
             hdr.m_fod[j].m_name = VisMF::BaseName(name);
-
+                        
             ++cnt[i];
         }
     }
@@ -1289,7 +1301,7 @@ VisMF::FindOffsets (const FabArray<FArrayBox> &mf,
 
 
     } else {    // ---- calculate offsets
-
+      //std::cout << "VisMF::FindOffsets loc b " << filePrefix << std::endl;
       RealDescriptor *whichRD = nullptr;
       if(FArrayBox::getFormat() == FABio::FAB_NATIVE) {
         whichRD = FPC::NativeRealDescriptor().clone();
@@ -1301,6 +1313,73 @@ VisMF::FindOffsets (const FabArray<FArrayBox> &mf,
       const FABio &fio = FArrayBox::getFABio();
       int whichRDBytes(whichRD->numBytes());
       int nComps(mf.nComp());
+
+       
+      for(int j=0; j< hdr.m_csz.size(); j++) 
+         //std::cout << "VisMF::FindOffsets rank: " << myProc << " for box: " << j << " csize: " << hdr.m_csz.at(j) << std::endl;
+      //comm to rank "coordinatorProc"
+      if(hdr.m_csz.size() != 0)
+      {
+#ifdef BL_USE_MPI
+    Vector<int> nmtags(nProcs,0);
+    Vector<int> offset(nProcs,0);
+
+    const Vector<int> &pmap = mf.DistributionMap().ProcessorMap();
+    //std::cout << " --rank " << myProc << " mf.size() " << mf.size() << " offset.size() " << offset.size() << std::endl;
+    for(int i(0), N(mf.size()); i < N; ++i) {
+        ++nmtags[pmap[i]];
+    }
+     
+    for(int i(1), N(offset.size()); i < N; ++i) {
+        offset[i] = offset[i-1] + nmtags[i-1];
+    }
+
+    Vector<std::size_t> senddata(nmtags[myProc]);
+
+    if(senddata.empty()) {
+      // Can't let senddata be empty as senddata.dataPtr() will fail.
+               senddata.resize(1);
+    }
+
+    int ioffset(0), joffset(0);
+
+    for(MFIter mfi(mf); mfi.isValid(); ++mfi) {
+      senddata[ioffset++] = hdr.m_csz.at(joffset++);//m_fod[mfi.index()].m_head;
+    }
+
+    BL_ASSERT(ioffset == nmtags[myProc]);
+
+    Vector<long> recvdata(mf.size());
+
+    BL_COMM_PROFILE(BLProfiler::Gatherv, recvdata.size() * sizeof(std::size_t),
+                    myProc, BLProfiler::BeforeCall());
+
+    BL_MPI_REQUIRE( MPI_Gatherv(senddata.dataPtr(),
+                                nmtags[myProc],
+                                ParallelDescriptor::Mpi_typemap<std::size_t>::type(),
+                                recvdata.dataPtr(),
+                                nmtags.dataPtr(),
+                                offset.dataPtr(),
+                                ParallelDescriptor::Mpi_typemap<std::size_t>::type(),
+                                coordinatorProc,
+                                comm) );
+
+    BL_COMM_PROFILE(BLProfiler::Gatherv, recvdata.size() * sizeof(std::size_t),
+                    myProc, BLProfiler::AfterCall());
+
+    if(myProc == coordinatorProc) {
+        Vector<int> cnt(nProcs,0);
+        hdr.m_csz.resize(mf.size());
+        for(int j(0), N(mf.size()); j < N; ++j) {
+            const int i(pmap[j]);
+            size_t csize = recvdata[offset[i]+cnt[i]];
+            //std::cout << "VisMF::MPIComm " << j << " csize: " << csize << std::endl;
+            hdr.m_csz[j] = csize;
+            ++cnt[i];
+        }
+    }
+#endif /*BL_USE_MPI*/ 
+      }
 
       if(myProc == coordinatorProc) {   // ---- calculate offsets
 	const BoxArray &mfBA = mf.boxArray();
@@ -1318,6 +1397,7 @@ VisMF::FindOffsets (const FabArray<FArrayBox> &mf,
 	    FArrayBox tempFab(mf.fabbox(i), nComps, false);  // ---- no alloc
             fio.write_header(hss, tempFab, tempFab.nComp());
 	    fabHeaderBytes[i] = static_cast<std::streamoff>(hss.tellp());
+            //std::cout << "VisMF::FindOffset header " << i << " size: " << fabHeaderBytes[i] << std::endl;
 	  }
 	}
 
@@ -1351,6 +1431,7 @@ VisMF::FindOffsets (const FabArray<FArrayBox> &mf,
 	    std::map<int, Vector<int> >::iterator rboIter = rankBoxOrder.find(rank);
 
             if(rboIter != rankBoxOrder.end()) {
+              //std::cout << " We have multiple boxes in a file! r=" << ri << " fi=" << fn << std::endl;
               Vector<int> &index = rboIter->second;
 	      whichFileNumber = fileNumbers[rank];
 	      whichFileName   = VisMF::BaseName(NFilesIter::FileName(whichFileNumber, filePrefix));
@@ -1358,8 +1439,18 @@ VisMF::FindOffsets (const FabArray<FArrayBox> &mf,
 	      for(int i(0); i < index.size(); ++i) {
                  hdr.m_fod[index[i]].m_name = whichFileName;
                  hdr.m_fod[index[i]].m_head = currentOffset[whichFileNumber];
-                 currentOffset[whichFileNumber] += mf.fabbox(index[i]).numPts() * nComps * whichRDBytes
-	                                           + fabHeaderBytes[index[i]];
+                 //std::cout << " i " << i << " index[i] " << index[i] << std::endl;
+                  if(hdr.m_csz.size() == 0) {
+                     currentOffset[whichFileNumber] += mf.fabbox(index[i]).numPts() * nComps * whichRDBytes
+	                                            + fabHeaderBytes[index[i]];
+                     //std::cout << " -- Querying mfab regular size " << mf.fabbox(index[i]).numPts() * nComps * whichRDBytes + fabHeaderBytes[index[i]] << std::endl;
+                   }
+                   else {
+                    //std::cout << " -- Querying mfab csize " << hdr.m_csz[index[i]] << std::endl;
+                   currentOffset[whichFileNumber] += hdr.m_csz[index[i]] + fabHeaderBytes[index[i]];
+                   
+                   }
+                  
               }
             }
 	  }
@@ -2522,7 +2613,7 @@ VisMF::WriteAsync (const FabArray<FArrayBox>& mf, const std::string& mf_name)
                      : (std::ios::binary | std::ios::app));
             if (!ofs.good()) amrex::FileOpenFailed(file_name);
             ofs.write(d.get(), total_bytes);
-            std::cout << "VisMF::WriteAsync, line 2447" << std::endl;
+            //std::cout << "VisMF::WriteAsync, line 2447" << std::endl;
             ofs.close();
         }
 
