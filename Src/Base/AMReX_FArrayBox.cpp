@@ -151,12 +151,6 @@ FABio::write_header (std::ostream&    os,
     BL_ASSERT(nvar <= f.nComp());
     amrex::StreamRetry sr(os, "FABio_write_header", 4);
     while(sr.TryOutput()) {
-
-      //std::cout << f.box() << ' ' << nvar; // HEADERHERE
-      if(f.get_compress())
-          //std::cout << ' ' << 'c';
-      //std::cout << '\n';
-
       os << f.box() << ' ' << nvar;
       if(f.get_compress()) 
           os << ' ' << 'c';

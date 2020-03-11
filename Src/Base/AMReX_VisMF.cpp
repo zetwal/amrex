@@ -1133,16 +1133,7 @@ VisMF::Write (const FabArray<FArrayBox>&    mf,
                      ++nFABs;
                    }
 
-                   //m_hdr.csz.push_back(fabcbytes);
-                   ////std::cout << "m_hdr size: " << m_hdr2.m_ncomp << std::endl;
                    hdr.m_csz.push_back(fabcbytes);
-
-                   //addcsize(fabcbytes);
-
-                   //fab.setCsize(fabcbytes);
-
-                   //fab.csize.push_back(fabcbytes);
-                   //mf[mfi].csize=fabcbytes;
                    //std::cout << "VisMF::Write, csize: " << fabcbytes << " cratio: " << (float)(fab.box().numPts()*whichRDBytes*mf.nComp())/fabcbytes << std::endl;
                 } else
 #endif
@@ -1315,8 +1306,9 @@ VisMF::FindOffsets (const FabArray<FArrayBox> &mf,
       int nComps(mf.nComp());
 
        
-      for(int j=0; j< hdr.m_csz.size(); j++) 
-         //std::cout << "VisMF::FindOffsets rank: " << myProc << " for box: " << j << " csize: " << hdr.m_csz.at(j) << std::endl;
+      //for(int j=0; j< hdr.m_csz.size(); j++) 
+      //{   std::cout << "VisMF::FindOffsets rank: " << myProc << " for box: " << j << " csize: " << hdr.m_csz.at(j) << std::endl; }
+
       //comm to rank "coordinatorProc"
       if(hdr.m_csz.size() != 0)
       {
