@@ -24,6 +24,7 @@
 //#include "timer.hpp"
 #include "CRC64.h"
 #include "blosc.h"
+#include <chrono>
 #endif
 
 namespace amrex {
@@ -931,6 +932,8 @@ VisMF::Write (const FabArray<FArrayBox>&    mf,
     BL_ASSERT(mf_name[mf_name.length() - 1] != '/');
     BL_ASSERT(currentVersion != VisMF::Header::Undefined_v1);
 
+    int myProc(ParallelDescriptor::MyProc());
+   
     // ---- add stream retry
     // ---- add stream buffer (to nfiles)
     RealDescriptor *whichRD = nullptr;
@@ -1091,6 +1094,7 @@ VisMF::Write (const FabArray<FArrayBox>&    mf,
                 if(compress)
                 {
 
+                   auto start = std::chrono::steady_clock::now();
                    // ---- find the total number of bytes per data component
                    // ---- Compress each component separately
                    size_t bytesToCompress(0), fabcbytes(0);
@@ -1135,6 +1139,10 @@ VisMF::Write (const FabArray<FArrayBox>&    mf,
 
                    hdr.m_csz.push_back(fabcbytes);
                    //std::cout << "VisMF::Write, csize: " << fabcbytes << " cratio: " << (float)(fab.box().numPts()*whichRDBytes*mf.nComp())/fabcbytes << std::endl;
+                   auto end = std::chrono::steady_clock::now();
+                   std::chrono::duration<double> elapsed_seconds = end-start; 
+                   std::cout << " --- Rank: " << myProc << " blosc elapsed time: " << elapsed_seconds.count() << "s\n";
+
                 } else
 #endif
                 { 
